@@ -1,5 +1,5 @@
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind, KeyEventState, KeyModifiers},
+    event::{self, Event, KeyCode, KeyModifiers},
     terminal,
 };
 
@@ -7,7 +7,6 @@ use std::{
     env::args,
     fs,
     io::{self, Write},
-    path::Path,
     time::Duration,
 };
 
@@ -105,8 +104,6 @@ impl Buffer {
             } else {
                 return false;
             }
-        } else {
-            let l = self.contents[self.cursor_pos.line].len();
         }
         true
     }
@@ -143,12 +140,10 @@ impl Buffer {
                     i += 1;
                 }
                 println!();
-            } else {
-                if self.contents[linectr].len() > width {
+            } else if self.contents[linectr].len() > width {
                     println!("{}", &self.contents[linectr][0..width]);
-                } else {
-                    println!("{: <width$}", self.contents[linectr]);
-                }
+            } else {
+                println!("{: <width$}", self.contents[linectr]);
             }
             linectr += 1;
         }
@@ -181,7 +176,7 @@ fn main() {
     'ed: loop {
         if event::poll(Duration::from_millis(100)).unwrap() {
             let (widthu, heightu) = terminal::size().unwrap();
-            let width = widthu as usize;
+            let _width = widthu as usize;
             let height = heightu as usize;
             let event = event::read().unwrap();
             match event {
@@ -344,7 +339,7 @@ fn main() {
                                         .map(|s| s.to_string())
                                         .collect();
                                     if buf.contents.len() < buf.cursor_pos.line {
-                                        buf.cursor_pos.line = if (buf.contents.is_empty()) {
+                                        buf.cursor_pos.line = if buf.contents.is_empty() {
                                             0
                                         } else {
                                             buf.contents.len() - 1
