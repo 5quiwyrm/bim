@@ -74,6 +74,16 @@ impl Buffer {
         }
     }
 
+    fn move_up(&mut self) {
+        if self.cursor_pos.line != 0 {
+            self.cursor_pos.line -= 1;
+            if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
+                let l = self.contents[self.cursor_pos.line].len();
+                self.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
+            }
+        }
+    }
+
     fn save(&mut self) {
         let trimmedlines: Vec<&str> = self.contents.iter().map(|s| s.trim_end()).collect();
         fs::write(self.filepath.clone(), trimmedlines.join("\n")).unwrap();
@@ -199,17 +209,7 @@ fn main() {
                                     buf.move_right();
                                 }
                                 KeyCode::Up => {
-                                    if buf.cursor_pos.line != 0 {
-                                        buf.cursor_pos.line -= 1;
-                                        if buf.cursor_pos.idx
-                                            >= buf.contents[buf.cursor_pos.line].len()
-                                        {
-                                            let l = buf.contents[buf.cursor_pos.line].len();
-                                            buf.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
-                                        }
-                                    } else {
-                                        buf.cursor_pos.idx = 0;
-                                    }
+                                    buf.move_up();
                                 }
                                 KeyCode::Down => {
                                     if buf.cursor_pos.line + 1 != buf.contents.len()
@@ -223,8 +223,7 @@ fn main() {
                                             buf.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
                                         }
                                     } else {
-                                        let l = buf.contents[0].len();
-                                        buf.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
+                                        let l = buf.contents[buf.cursor_pos.line].len();
                                     }
                                 }
                                 KeyCode::Home => {
@@ -271,17 +270,7 @@ fn main() {
                                     buf.move_right();
                                 }
                                 KeyCode::Char('e') => {
-                                    if buf.cursor_pos.line != 0 {
-                                        buf.cursor_pos.line -= 1;
-                                        if buf.cursor_pos.idx
-                                            >= buf.contents[buf.cursor_pos.line].len()
-                                        {
-                                            let l = buf.contents[buf.cursor_pos.line].len();
-                                            buf.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
-                                        }
-                                    } else {
-                                        buf.cursor_pos.idx = 0;
-                                    }
+                                    buf.move_up();
                                 }
                                 KeyCode::Char('a') => {
                                     if buf.cursor_pos.line + 1 < buf.contents.len()
@@ -294,9 +283,6 @@ fn main() {
                                             let l = buf.contents[buf.cursor_pos.line].len();
                                             buf.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
                                         }
-                                    } else {
-                                        let l = buf.contents[0].len();
-                                        buf.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
                                     }
                                 }
                                 KeyCode::Char('u') => {
@@ -305,13 +291,18 @@ fn main() {
                                     } else {
                                         buf.cursor_pos.line = 0;
                                     }
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
                                 KeyCode::Char('d') => {
                                     if buf.cursor_pos.line + height >= buf.contents.len() {
                                         buf.cursor_pos.line = buf.contents.len();
+                                        if buf.cursor_pos.line != 0 {
+                                            buf.cursor_pos.line -= 1;
+                                        }
                                     } else {
                                         buf.cursor_pos.line += height;
                                     }
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len()
                                 }
                                 KeyCode::Char('l') => {
                                     buf.contents.remove(buf.cursor_pos.line);
