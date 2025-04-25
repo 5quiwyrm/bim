@@ -140,7 +140,11 @@ impl Buffer {
                 }
                 println!();
             } else {
-                println!("{: <width$}", self.contents[linectr]);
+                if self.contents[linectr].len() > width {
+                    println!(&self.contents[linectr][0..width]);
+                } else {
+                    println!("{: <width$}", self.contents[linectr]);
+                }
             }
             linectr += 1;
         }
