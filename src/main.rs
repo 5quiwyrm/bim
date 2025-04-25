@@ -4,6 +4,7 @@ use crossterm::{
 };
 
 use std::{
+    collections::HashMap,
     env::args,
     fs,
     io::{self, Write},
@@ -28,6 +29,7 @@ struct Buffer {
     filepath: String,
     lastact: Action,
     search_char: char,
+    marklist: HashMap<char, Cursor>,
     indent_lvl: usize,
 }
 
@@ -48,6 +50,7 @@ impl Buffer {
             filepath,
             lastact: Action::None,
             search_char: ' ',
+            marklist: HashMap::new(),
             indent_lvl: 0,
         }
     }
@@ -112,6 +115,7 @@ impl Buffer {
         }
     }
 
+    #[inline]
     fn save(&mut self) {
         let trimmedlines: Vec<&str> = self.contents.iter().map(|s| s.trim_end()).collect();
         fs::write(self.filepath.clone(), trimmedlines.join("\n")).unwrap();
@@ -137,6 +141,23 @@ impl Buffer {
         }
     }
 
+    #[inline]
+    fn type_char(&mut self, ch: char) {
+        self.contents[self.cursor_pos.line].insert(self.cursor_pos.idx, ch);
+        self.cursor_pos.idx += 1;
+    }
+
+    fn newline_below(&mut self, linect: String) {
+        let mut newline = String::new();
+        for _ in 0..(buf.indent_lvl * 4) {
+            newline.push(' ');
+        }
+        newline.push_str(&linect);
+        buf.cursor_pos.line += 1;
+        buf.cursor_pos.idx = buf.indent_lvl * 4;
+        buf.contents.insert(buf.cursor_pos.line, newline);
+    }
+
     fn print(&mut self) {
         print!("\x1b[J\x1b[H");
         let (widthu, heightu) = terminal::size().unwrap();
@@ -158,6 +179,8 @@ impl Buffer {
                     let content = line_content.next().unwrap_or(' ');
                     if i == self.cursor_pos.idx {
                         print!("\x1b[47m\x1b[30m{content}\x1b[0m");
+                    } else if i == self.indent_lvl * 4 {
+                        print!("\x1b[43m\x1b[30m{content}\x1b[0m");
                     } else {
                         print!("{content}");
                     }
@@ -233,14 +256,48 @@ fn main() {
                                     buf.contents.insert(buf.cursor_pos.line, newline);
                                 }
                                 KeyCode::Char(c) => {
-                                    if c == '{' || c == '[' {
-                                        buf.indent_lvl += 1;
+                                    buf.type_char(c);
+                                    match c {
+                                        '[' => {
+                                            buf.type_char(']');
+                                            buf.indent_lvl += 1;
+                                            buf.move_left();
+                                        }
+                                        '{' => {
+                                            buf.type_char('}');
+                                            buf.indent_lvl += 1;
+                                            buf.move_left();
+                                        }
+                                        '}' => {
+                                            if buf.contents[buf.cursor_pos.line]
+                                                .chars()
+                                                .nth(buf.cursor_pos.idx)
+                                                .unwrap_or(' ')
+                                                == '}'
+                                            {
+                                                buf.backspace();
+                                                buf.move_right();
+                                            }
+                                            if buf.indent_lvl != 0 {
+                                                buf.indent_lvl -= 1;
+                                            }
+                                        }
+                                        ']' => {
+                                            if buf.contents[buf.cursor_pos.line]
+                                                .chars()
+                                                .nth(buf.cursor_pos.idx)
+                                                .unwrap_or(' ')
+                                                == ']'
+                                            {
+                                                buf.backspace();
+                                                buf.move_right();
+                                                if buf.indent_lvl != 0 {
+                                                    buf.indent_lvl -= 1;
+                                                }
+                                            }
+                                        }
+                                        _ => {}
                                     }
-                                    if (c == '}' || c == ']') && buf.indent_lvl != 0 {
-                                        buf.indent_lvl -= 1;
-                                    }
-                                    buf.contents[buf.cursor_pos.line].insert(buf.cursor_pos.idx, c);
-                                    buf.cursor_pos.idx += 1;
                                 }
                                 KeyCode::Left => {
                                     buf.move_left();
@@ -423,6 +480,7 @@ fn main() {
                                 KeyCode::Char('t') => {
                                     buf.top = buf.cursor_pos.line;
                                 }
+                                KeyCode::Char('o') => {}
                                 _ => {}
                             },
                             _ => {}
