@@ -93,7 +93,6 @@ impl Buffer {
             self.cursor_pos.line -= 1;
             if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
                 let l = self.contents[self.cursor_pos.line].len();
-                self.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
             }
             true
         } else {
@@ -149,13 +148,13 @@ impl Buffer {
 
     fn newline_below(&mut self, linect: String) {
         let mut newline = String::new();
-        for _ in 0..(buf.indent_lvl * 4) {
+        for _ in 0..(self.indent_lvl * 4) {
             newline.push(' ');
         }
         newline.push_str(&linect);
-        buf.cursor_pos.line += 1;
-        buf.cursor_pos.idx = buf.indent_lvl * 4;
-        buf.contents.insert(buf.cursor_pos.line, newline);
+        self.cursor_pos.line += 1;
+        self.cursor_pos.idx = self.indent_lvl * 4;
+        self.contents.insert(self.cursor_pos.line, newline);
     }
 
     fn print(&mut self) {
@@ -243,17 +242,10 @@ fn main() {
                                     buf.backspace();
                                 }
                                 KeyCode::Enter => {
-                                    let mut newline = String::new();
-                                    for _ in 0..(buf.indent_lvl * 4) {
-                                        newline.push(' ');
-                                    }
                                     let linect: String = buf.contents[buf.cursor_pos.line]
                                         .drain(buf.cursor_pos.idx..)
                                         .collect();
-                                    newline.push_str(&linect);
-                                    buf.cursor_pos.line += 1;
-                                    buf.cursor_pos.idx = buf.indent_lvl * 4;
-                                    buf.contents.insert(buf.cursor_pos.line, newline);
+                                    buf.newline_below(linect);
                                 }
                                 KeyCode::Char(c) => {
                                     buf.type_char(c);
@@ -454,6 +446,35 @@ fn main() {
                                         }
                                     }
                                 }
+                                KeyCode::Char('o') => {
+                                    buf.newline_below("".to_string());
+                                }
+                                KeyCode::Char('m') => {
+                                    buf.move_left();
+                                    if let Some(markchar) = buf.contents[buf.cursor_pos.line]
+                                        .chars()
+                                        .nth(buf.cursor_pos.idx)
+                                    {
+                                        _ = buf.marklist.insert(markchar, buf.cursor_pos);
+                                    }
+                                    buf.move_right();
+                                    buf.backspace();
+                                }
+                                KeyCode::Char('g') => {
+                                    buf.move_left();
+                                    if let Some(markchar) = buf.contents[buf.cursor_pos.line]
+                                        .chars()
+                                        .nth(buf.cursor_pos.idx)
+                                    {
+                                        buf.move_right();
+                                        buf.backspace();
+                                        if let Some(&loc) = buf.marklist.get(&markchar) {
+                                            _ = buf.marklist.insert('_', buf.cursor_pos);
+                                            buf.cursor_pos = loc;
+                                        }
+                                    }
+                                }
+
                                 _ => {}
                             },
                             KeyModifiers::CONTROL => match key.code {
@@ -480,7 +501,6 @@ fn main() {
                                 KeyCode::Char('t') => {
                                     buf.top = buf.cursor_pos.line;
                                 }
-                                KeyCode::Char('o') => {}
                                 _ => {}
                             },
                             _ => {}
