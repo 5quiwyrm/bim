@@ -74,6 +74,14 @@ impl Buffer {
         }
     }
 
+    fn save(&mut self) {
+                                    let trimmedlines: Vec<&str> =
+                                                self.contents.iter().map(|s| s.trim_end()).collect();
+                                            fs::write(self.filepath.clone(), trimmedlines.join("\n"))
+                                                .unwrap();
+                                            self.lastact = Action::Save;
+         }
+
     fn print(&mut self) {
         let (widthu, heightu) = terminal::size().unwrap();
         let width = widthu as usize;
@@ -130,6 +138,7 @@ fn main() {
     let mut buf = Buffer::new(path);
     print!("\x1bc");
     _ = terminal::enable_raw_mode();
+    buf.save();
     'ed: loop {
         if event::poll(Duration::from_millis(100)).unwrap() {
             let (widthu, heightu) = terminal::size().unwrap();
@@ -295,7 +304,7 @@ fn main() {
                                     }
                                 }
                                 KeyCode::Char('d') => {
-                                    if buf.cursor_pos.line + height > buf.contents.len() {
+                                    if buf.cursor_pos.line + height >= buf.contents.len() {
                                         buf.cursor_pos.line = buf.contents.len();
                                     } else {
                                         buf.cursor_pos.line += height;
@@ -344,5 +353,7 @@ fn main() {
         }
     }
     print!("\x1bc");
+    buf.save();
+
     _ = terminal::disable_raw_mode();
 }
