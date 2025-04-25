@@ -171,7 +171,8 @@ fn main() {
                         match key.modifiers {
                             KeyModifiers::NONE | KeyModifiers::SHIFT => match key.code {
                                 KeyCode::Backspace => {
-                                    if buf.cursor_pos.idx == 0 {
+                                    let t = buf.cursor_pos.idx;
+                                    if t == 0 {
                                         if buf.cursor_pos.line != 0 {
                                             let currline =
                                                 buf.contents[buf.cursor_pos.line].clone();
@@ -186,8 +187,7 @@ fn main() {
                                             buf.contents[0].remove(0);
                                         }
                                     } else {
-                                        buf.contents[buf.cursor_pos.line]
-                                            .remove(buf.cursor_pos.line - 1);
+                                        buf.contents[buf.cursor_pos.line].remove(t - 1);
                                         buf.cursor_pos.idx -= 1;
                                     }
                                 }
