@@ -10,6 +10,7 @@ use std::{
     time::Duration,
 };
 
+#[derive(Copy, Clone)]
 struct Cursor {
     line: usize,
     idx: usize,
@@ -26,6 +27,7 @@ struct Buffer {
     top: usize,
     filepath: String,
     lastact: Action,
+    search_char: char,
     indent_lvl: usize,
 }
 
@@ -45,6 +47,7 @@ impl Buffer {
             cursor_pos: Cursor { line: 0, idx: 0 },
             filepath,
             lastact: Action::None,
+            search_char: ' ',
             indent_lvl: 0,
         }
     }
@@ -88,10 +91,11 @@ impl Buffer {
             if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
                 let l = self.contents[self.cursor_pos.line].len();
                 self.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
-                return true;
             }
+            true
+        } else {
+            false
         }
-        false
     }
 
     #[inline]
@@ -101,11 +105,11 @@ impl Buffer {
             if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
                 let l = self.contents[self.cursor_pos.line].len();
                 self.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
-            } else {
-                return false;
             }
+            true
+        } else {
+            false
         }
-        true
     }
 
     fn save(&mut self) {
@@ -114,7 +118,27 @@ impl Buffer {
         self.lastact = Action::Save;
     }
 
+    fn backspace(&mut self) {
+        let t = self.cursor_pos.idx;
+        if t == 0 {
+            if self.cursor_pos.line != 0 {
+                let currline = self.contents[self.cursor_pos.line].clone();
+                let oldlen = self.contents[self.cursor_pos.line - 1].len();
+                self.contents[self.cursor_pos.line - 1].push_str(&currline);
+                self.contents.remove(self.cursor_pos.line);
+                self.cursor_pos.line -= 1;
+                self.cursor_pos.idx = oldlen;
+            } else if !self.contents[0].is_empty() {
+                self.contents[0].remove(0);
+            }
+        } else {
+            self.contents[self.cursor_pos.line].remove(t - 1);
+            self.cursor_pos.idx -= 1;
+        }
+    }
+
     fn print(&mut self) {
+        print!("\x1b[J\x1b[H");
         let (widthu, heightu) = terminal::size().unwrap();
         let width = widthu as usize;
         let height = heightu as usize;
@@ -141,7 +165,7 @@ impl Buffer {
                 }
                 println!();
             } else if self.contents[linectr].len() > width {
-                    println!("{}", &self.contents[linectr][0..width]);
+                println!("{}", &self.contents[linectr][0..width]);
             } else {
                 println!("{: <width$}", self.contents[linectr]);
             }
@@ -150,8 +174,12 @@ impl Buffer {
         println!(
             "{: <width$}",
             format!(
-                "({}, {}) [{}] (> x {})",
-                self.cursor_pos.line, self.cursor_pos.idx, self.filepath, self.indent_lvl,
+                "({}, {}) [{}] (>: {:?}) (/: {:?})",
+                self.cursor_pos.line,
+                self.cursor_pos.idx,
+                self.filepath,
+                self.indent_lvl,
+                self.search_char,
             )
         );
         println!(
@@ -185,25 +213,11 @@ fn main() {
                         match key.modifiers {
                             KeyModifiers::NONE | KeyModifiers::SHIFT => match key.code {
                                 KeyCode::Backspace => {
-                                    let t = buf.cursor_pos.idx;
-                                    if t == 0 {
-                                        if buf.cursor_pos.line != 0 {
-                                            let currline =
-                                                buf.contents[buf.cursor_pos.line].clone();
-                                            let oldlen =
-                                                buf.contents[buf.cursor_pos.line - 1].len();
-                                            buf.contents[buf.cursor_pos.line - 1]
-                                                .push_str(&currline);
-                                            buf.contents.remove(buf.cursor_pos.line);
-                                            buf.cursor_pos.line -= 1;
-                                            buf.cursor_pos.idx = oldlen;
-                                        } else if !buf.contents[0].is_empty() {
-                                            buf.contents[0].remove(0);
-                                        }
-                                    } else {
-                                        buf.contents[buf.cursor_pos.line].remove(t - 1);
-                                        buf.cursor_pos.idx -= 1;
-                                    }
+                                    buf.backspace();
+                                }
+                                KeyCode::Delete => {
+                                    buf.move_right();
+                                    buf.backspace();
                                 }
                                 KeyCode::Enter => {
                                     let mut newline = String::new();
@@ -328,7 +342,61 @@ fn main() {
                                     buf.indent_lvl = spaces / 4;
                                     buf.cursor_pos.idx = spaces;
                                 }
-                                KeyCode::Char('f') => {}
+                                KeyCode::Char('/') => {
+                                    buf.move_left();
+                                    buf.search_char = buf.contents[buf.cursor_pos.line]
+                                        .chars()
+                                        .nth(buf.cursor_pos.idx)
+                                        .unwrap_or(' ');
+                                    buf.move_right();
+                                    buf.backspace();
+                                }
+                                KeyCode::Char('n') => {
+                                    if buf.move_right() {
+                                        'findfwd: loop {
+                                            let prevpos = buf.cursor_pos;
+                                            if let Some(p) = buf.contents[buf.cursor_pos.line]
+                                                [buf.cursor_pos.idx..]
+                                                .chars()
+                                                .position(|c| c == buf.search_char)
+                                            {
+                                                buf.cursor_pos.idx += p;
+                                                break 'findfwd;
+                                            } else {
+                                                buf.cursor_pos.idx = 0;
+                                                if !buf.move_down() {
+                                                    buf.cursor_pos = prevpos;
+                                                    break 'findfwd;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                KeyCode::Char('p') => {
+                                    if buf.move_left() {
+                                        'findfwd: loop {
+                                            let prevpos = buf.cursor_pos;
+                                            if let Some(p) = buf.contents[buf.cursor_pos.line]
+                                                [0..buf.cursor_pos.idx]
+                                                .chars()
+                                                .rev()
+                                                .position(|c| c == buf.search_char)
+                                            {
+                                                buf.cursor_pos.idx -= p;
+                                                buf.cursor_pos.idx -= 1;
+                                                break 'findfwd;
+                                            } else {
+                                                let stat = buf.move_up();
+                                                buf.cursor_pos.idx =
+                                                    buf.contents[buf.cursor_pos.line].len();
+                                                if !stat {
+                                                    buf.cursor_pos = prevpos;
+                                                    break 'findfwd;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 _ => {}
                             },
                             KeyModifiers::CONTROL => match key.code {
@@ -352,6 +420,9 @@ fn main() {
                                     }
                                     buf.save();
                                 }
+                                KeyCode::Char('t') => {
+                                    buf.top = buf.cursor_pos.line;
+                                }
                                 _ => {}
                             },
                             _ => {}
@@ -363,7 +434,6 @@ fn main() {
                 }
                 _ => {}
             }
-            print!("\x1b[J\x1b[H");
             buf.print();
             stdout.flush().unwrap();
             buf.lastact = Action::None;
