@@ -1,4 +1,5 @@
 use crossterm::{
+    cursor::Hide,
     event::{self, Event, KeyCode, KeyModifiers},
     terminal,
 };
@@ -92,7 +93,7 @@ impl Buffer {
         if self.cursor_pos.line != 0 {
             self.cursor_pos.line -= 1;
             if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
-                let l = self.contents[self.cursor_pos.line].len();
+                self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
             }
             true
         } else {
@@ -104,9 +105,8 @@ impl Buffer {
     fn move_down(&mut self) -> bool {
         if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {
             self.cursor_pos.line += 1;
-            if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
-                let l = self.contents[self.cursor_pos.line].len();
-                self.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
+            if self.cursor_pos.idx > self.contents[self.cursor_pos.line].len() {
+                self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
             }
             true
         } else {
@@ -179,7 +179,11 @@ impl Buffer {
                     if i == self.cursor_pos.idx {
                         print!("\x1b[47m\x1b[30m{content}\x1b[0m");
                     } else if i == self.indent_lvl * 4 {
-                        print!("\x1b[43m\x1b[30m{content}\x1b[0m");
+                        if content == ' ' {
+                            print!("\x1b[33m\x1b[2m|\x1b[0m");
+                        } else {
+                            print!("\x1b[33m{content}\x1b[0m");
+                        }
                     } else {
                         print!("{content}");
                     }
@@ -197,8 +201,8 @@ impl Buffer {
             "{: <width$}",
             format!(
                 "({}, {}) [{}] (>: {:?}) (/: {:?})",
-                self.cursor_pos.line,
-                self.cursor_pos.idx,
+                self.cursor_pos.line + 1,
+                self.cursor_pos.idx + 1,
                 self.filepath,
                 self.indent_lvl,
                 self.search_char,
