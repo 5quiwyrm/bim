@@ -33,7 +33,10 @@ struct Buffer {
 impl Buffer {
     fn new(filepath: String) -> Self {
         let contents: Vec<String> = fs::read_to_string(&filepath)
-            .unwrap()
+            .unwrap_or({
+                fs::File::create(&filepath).unwrap();
+                "".to_string()
+            })
             .lines()
             .map(|s| s.to_string())
             .collect();
