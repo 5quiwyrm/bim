@@ -50,50 +50,61 @@ impl Buffer {
         }
     }
 
-    fn move_left(&mut self) {
+    fn move_left(&mut self) -> bool {
         if self.cursor_pos.idx == 0 {
             if self.cursor_pos.line != 0 {
                 self.cursor_pos.line -= 1;
                 self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
+            } else {
+                return false;
             }
         } else {
             self.cursor_pos.idx -= 1;
         }
+        true
     }
 
-    fn move_right(&mut self) {
+    fn move_right(&mut self) -> bool {
         if self.cursor_pos.idx == self.contents[self.cursor_pos.line].len()
             || self.contents[self.cursor_pos.line].is_empty()
         {
             if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {
                 self.cursor_pos.line += 1;
                 self.cursor_pos.idx = 0;
+            } else {
+                return false;
             }
         } else {
             self.cursor_pos.idx += 1;
         }
+        true
     }
 
-    fn move_up(&mut self) {
+    fn move_up(&mut self) -> bool {
         if self.cursor_pos.line != 0 {
             self.cursor_pos.line -= 1;
             if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
                 let l = self.contents[self.cursor_pos.line].len();
                 self.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
+                return true;
             }
         }
+        false
     }
 
-    fn move_down(&mut self) {
+    fn move_down(&mut self) -> bool {
         if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {
             self.cursor_pos.line += 1;
             if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
                 let l = self.contents[self.cursor_pos.line].len();
                 self.cursor_pos.idx = if l != 0 { l - 1 } else { 0 };
+            } else {
+                return false;
             }
         } else {
             let l = self.contents[self.cursor_pos.line].len();
         }
+        true
     }
 
     fn save(&mut self) {
