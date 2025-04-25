@@ -141,7 +141,7 @@ impl Buffer {
                 println!();
             } else {
                 if self.contents[linectr].len() > width {
-                    println!(&self.contents[linectr][0..width]);
+                    println!("{}", &self.contents[linectr][0..width]);
                 } else {
                     println!("{: <width$}", self.contents[linectr]);
                 }
@@ -332,6 +332,14 @@ fn main() {
                                 KeyCode::Char('f') => {}
                                 _ => {}
                             },
+                            KeyModifiers::CONTROL => {
+                                match key.code {
+                                    KeyCode::Char('r') => {
+                                        //          buf.contents = fs.read_to_string(&buf.)
+                                    }
+                                    _ => {}
+                                }
+                            }
                             _ => {}
                         }
                     }
