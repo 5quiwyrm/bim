@@ -50,6 +50,7 @@ impl Buffer {
         }
     }
 
+    #[inline]
     fn move_left(&mut self) -> bool {
         if self.cursor_pos.idx == 0 {
             if self.cursor_pos.line != 0 {
@@ -64,6 +65,7 @@ impl Buffer {
         true
     }
 
+    #[inline]
     fn move_right(&mut self) -> bool {
         if self.cursor_pos.idx == self.contents[self.cursor_pos.line].len()
             || self.contents[self.cursor_pos.line].is_empty()
@@ -80,6 +82,7 @@ impl Buffer {
         true
     }
 
+    #[inline]
     fn move_up(&mut self) -> bool {
         if self.cursor_pos.line != 0 {
             self.cursor_pos.line -= 1;
@@ -92,6 +95,7 @@ impl Buffer {
         false
     }
 
+    #[inline]
     fn move_down(&mut self) -> bool {
         if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {
             self.cursor_pos.line += 1;
@@ -332,14 +336,29 @@ fn main() {
                                 KeyCode::Char('f') => {}
                                 _ => {}
                             },
-                            KeyModifiers::CONTROL => {
-                                match key.code {
-                                    KeyCode::Char('r') => {
-                                        //          buf.contents = fs.read_to_string(&buf.)
+                            KeyModifiers::CONTROL => match key.code {
+                                KeyCode::Char('r') => {
+                                    buf.contents = fs::read_to_string(&buf.filepath)
+                                        .unwrap()
+                                        .lines()
+                                        .map(|s| s.to_string())
+                                        .collect();
+                                    if buf.contents.len() < buf.cursor_pos.line {
+                                        buf.cursor_pos.line = if (buf.contents.is_empty()) {
+                                            0
+                                        } else {
+                                            buf.contents.len() - 1
+                                        };
                                     }
-                                    _ => {}
+                                    if buf.contents[buf.cursor_pos.line].len() < buf.cursor_pos.idx
+                                    {
+                                        buf.cursor_pos.idx =
+                                            buf.contents[buf.cursor_pos.line].len();
+                                    }
+                                    buf.save();
                                 }
-                            }
+                                _ => {}
+                            },
                             _ => {}
                         }
                     }
