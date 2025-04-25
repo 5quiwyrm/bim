@@ -171,8 +171,7 @@ fn main() {
                         match key.modifiers {
                             KeyModifiers::NONE | KeyModifiers::SHIFT => match key.code {
                                 KeyCode::Backspace => {
-                                    let t = buf.cursor_pos.idx;
-                                    if t == 0 {
+                                    if buf.cursor_pos.idx == 0 {
                                         if buf.cursor_pos.line != 0 {
                                             let currline =
                                                 buf.contents[buf.cursor_pos.line].clone();
@@ -187,7 +186,8 @@ fn main() {
                                             buf.contents[0].remove(0);
                                         }
                                     } else {
-                                        buf.contents[buf.cursor_pos.line].remove(t - 1);
+                                        buf.contents[buf.cursor_pos.line]
+                                            .remove(buf.cursor_pos.line - 1);
                                         buf.cursor_pos.idx -= 1;
                                     }
                                 }
@@ -248,11 +248,7 @@ fn main() {
                                     break 'ed;
                                 }
                                 KeyCode::Char('s') => {
-                                    let trimmedlines: Vec<&str> =
-                                        buf.contents.iter().map(|s| s.trim_end()).collect();
-                                    fs::write(buf.filepath.clone(), trimmedlines.join("\n"))
-                                        .unwrap();
-                                    buf.lastact = Action::Save;
+                                    buf.save();
                                 }
                                 KeyCode::Char('b') => {
                                     let linect = buf.contents.len();
