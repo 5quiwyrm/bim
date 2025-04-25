@@ -75,12 +75,10 @@ impl Buffer {
     }
 
     fn save(&mut self) {
-                                    let trimmedlines: Vec<&str> =
-                                                self.contents.iter().map(|s| s.trim_end()).collect();
-                                            fs::write(self.filepath.clone(), trimmedlines.join("\n"))
-                                                .unwrap();
-                                            self.lastact = Action::Save;
-         }
+        let trimmedlines: Vec<&str> = self.contents.iter().map(|s| s.trim_end()).collect();
+        fs::write(self.filepath.clone(), trimmedlines.join("\n")).unwrap();
+        self.lastact = Action::Save;
+    }
 
     fn print(&mut self) {
         let (widthu, heightu) = terminal::size().unwrap();
@@ -172,12 +170,17 @@ fn main() {
                                     }
                                 }
                                 KeyCode::Enter => {
-                                    buf.contents.insert(buf.cursor_pos.line + 1, String::new());
-                                    buf.cursor_pos.idx = buf.indent_lvl * 4;
-                                    buf.cursor_pos.line += 1;
+                                    let mut newline = String::new();
                                     for _ in 0..(buf.indent_lvl * 4) {
-                                        buf.contents[buf.cursor_pos.line].push(' ');
+                                        newline.push(' ');
                                     }
+                                    let linect: String = buf.contents[buf.cursor_pos.line]
+                                        .drain(buf.cursor_pos.idx..)
+                                        .collect();
+                                    newline.push_str(&linect);
+                                    buf.cursor_pos.line += 1;
+                                    buf.cursor_pos.idx = buf.indent_lvl * 4;
+                                    buf.contents.insert(buf.cursor_pos.line, newline);
                                 }
                                 KeyCode::Char(c) => {
                                     if c == '{' || c == '[' {
