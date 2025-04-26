@@ -19,6 +19,7 @@ pub enum Mode {
     Paste,
     Replace,
     Find,
+    ReplaceStr,
 }
 
 impl fmt::Display for Mode {
@@ -28,6 +29,7 @@ impl fmt::Display for Mode {
             Mode::Paste => write!(f, "paste"),
             Mode::Replace => write!(f, "replace"),
             Mode::Find => write!(f, "find"),
+            Mode::ReplaceStr => write!(f, "replace str"),
         }
     }
 }
@@ -39,6 +41,7 @@ pub struct Buffer {
     pub filepath: String,
     pub lastact: Action,
     pub find_str: String,
+    pub replace_str: String,
     pub marklist: HashMap<char, Cursor>,
     pub indent_lvl: usize,
     pub mode: Mode,
@@ -61,6 +64,7 @@ impl Buffer {
             filepath,
             lastact: Action::None,
             find_str: String::new(),
+            replace_str: String::new(),
             marklist: HashMap::new(),
             indent_lvl: 0,
             mode: Mode::Default,
@@ -216,12 +220,21 @@ impl Buffer {
         println!(
             "{: <width$}",
             format!(
-                "({}, {}) [{}] (>: {:?}) (/: {:?}) (mod: {})",
+                "({}, {}) [{}] (>: {:?}) {}{}(mod: {})",
                 self.cursor_pos.line + 1,
                 self.cursor_pos.idx + 1,
                 self.filepath,
                 self.indent_lvl,
-                self.find_str,
+                if self.find_str.is_empty() {
+                    "".to_string()
+                } else {
+                    format!("(/: {:?}) ", self.find_str)
+                },
+                if self.replace_str.is_empty() {
+                    "".to_string()
+                } else {
+                    format!(" (/: {:?}) ", self.replace_str)
+                },
                 self.mode,
             )
         );

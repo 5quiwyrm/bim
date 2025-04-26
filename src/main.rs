@@ -66,19 +66,23 @@ fn main() {
                                 KeyCode::Esc => {
                                     buf.mode = Mode::Default;
                                 }
-                                KeyCode::Backspace => {
-                                    if buf.mode != Mode::Find {
-                                        buf.backspace()
-                                    } else {
-                                        _ = buf.find_str.pop();
+                                KeyCode::Backspace => match buf.mode {
+                                    Mode::Find => {
+                                        buf.find_str.pop();
                                     }
-                                }
+                                    Mode::ReplaceStr => {
+                                        buf.replace_str.pop();
+                                    }
+                                    _ => {
+                                        buf.backspace();
+                                    }
+                                },
                                 KeyCode::Delete => {
                                     buf.move_right();
                                     buf.backspace();
                                 }
                                 KeyCode::Enter => {
-                                    if buf.mode == Mode::Find {
+                                    if buf.mode == Mode::Find || buf.mode == Mode::ReplaceStr {
                                         buf.mode = Mode::Default;
                                     } else {
                                         match buf.contents[buf.cursor_pos.line]
@@ -111,10 +115,16 @@ fn main() {
                                     }
                                 }
                                 KeyCode::Char(c) => {
-                                    if buf.mode != Mode::Find {
-                                        buf.type_char(c);
-                                    } else {
-                                        buf.find_str.push(c);
+                                    match buf.mode {
+                                        Mode::Find => {
+                                            buf.find_str.push(c);
+                                        }
+                                        Mode::ReplaceStr => {
+                                            buf.replace_str.push(c);
+                                        }
+                                        _ => {
+                                            buf.type_char(c);
+                                        }
                                     }
                                     match c {
                                         '{' | '}' | '[' | ']' | '(' | ')'
@@ -330,6 +340,21 @@ fn main() {
                                         }
                                     }
                                 }
+                                KeyCode::Char('h') => {
+                                    buf.contents[buf.cursor_pos.line].replace_range(
+                                        (buf.cursor_pos.idx - buf.find_str.len())
+                                            ..buf.cursor_pos.idx,
+                                        &buf.replace_str,
+                                    );
+                                }
+                                KeyCode::Char('r') => {
+                                    if buf.mode == Mode::ReplaceStr {
+                                        buf.mode = Mode::Default;
+                                    } else {
+                                        buf.mode = Mode::ReplaceStr;
+                                        buf.replace_str.clear();
+                                    }
+                                }
 
                                 _ => {}
                             },
@@ -357,6 +382,7 @@ fn main() {
                                 KeyCode::Char('t') => {
                                     buf.top = buf.cursor_pos.line;
                                 }
+                                KeyCode::Char('g') => {}
                                 _ => {}
                             },
                             _ => {}
