@@ -221,7 +221,7 @@ impl Buffer {
         let height = heightu as usize;
         let bottom_pad = 2;
         if self.cursor_pos.line > self.top + height - bottom_pad - 3 {
-            self.top = self.cursor_pos.line - height + bottom_pad + 3;
+            self.top = self.cursor_pos.line + bottom_pad + 3 - height;
         }
         if self.cursor_pos.line < self.top {
             self.top = self.cursor_pos.line;
