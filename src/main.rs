@@ -1,5 +1,4 @@
 use crossterm::{
-    cursor::Hide,
     event::{self, Event, KeyCode, KeyModifiers},
     terminal,
 };
@@ -11,7 +10,6 @@ use std::{
     io::{self, Write},
     time::Duration,
 };
-
 #[derive(Copy, Clone)]
 struct Cursor {
     line: usize,
@@ -176,16 +174,21 @@ impl Buffer {
                 let mut line_content = self.contents[self.cursor_pos.line].chars();
                 while i < width {
                     let content = line_content.next().unwrap_or(' ');
-                    if i == self.cursor_pos.idx {
-                        print!("\x1b[47m\x1b[30m{content}\x1b[0m");
-                    } else if i == self.indent_lvl * 4 {
-                        if content == ' ' {
-                            print!("\x1b[33m\x1b[2m|\x1b[0m");
-                        } else {
-                            print!("\x1b[33m{content}\x1b[0m");
+                    let id = self.indent_lvl * 4;
+                    match i {
+                        a if a == self.cursor_pos.idx => {
+                            print!("\x1b[47m\x1b[30m{content}\x1b[0m");
                         }
-                    } else {
-                        print!("{content}");
+                        b if b == id => {
+                            if content == ' ' {
+                                print!("\x1b[33m\x1b[2m|\x1b[0m");
+                            } else {
+                                print!("\x1b[33m{content}\x1b[0m");
+                            }
+                        }
+                        _ => {
+                            print!("{content}");
+                        }
                     }
                     i += 1;
                 }
@@ -208,13 +211,43 @@ impl Buffer {
                 self.search_char,
             )
         );
-        println!(
+        print!(
             "{: <width$}",
             match self.lastact {
                 Action::Save => "saved!",
                 _ => "",
             }
         );
+    }
+}
+
+macro_rules! autopair {
+    ($buffer: ident, $char: expr, $($open: expr, $close: expr);*) => {
+        match $char { $(
+            $open => {
+                if $buffer.contents[$buffer.cursor_pos.line]
+                    .chars()
+                    .nth($buffer.cursor_pos.idx)
+                    .unwrap_or(' ')
+                    .is_whitespace()
+                {
+                    $buffer.type_char($close);
+                    $buffer.move_left();
+                }
+                $buffer.indent_lvl += 1;
+            }
+            $close => {
+                if $buffer.contents[$buffer.cursor_pos.line].chars().nth($buffer.cursor_pos.idx) == Some($close) {
+                    $buffer.backspace();
+                    $buffer.move_right();
+                }
+                if $buffer.indent_lvl != 0 {
+                   $buffer.indent_lvl -= 1
+                }
+            }
+        ),*
+            _ => {}
+        }
     }
 }
 
@@ -246,52 +279,42 @@ fn main() {
                                     buf.backspace();
                                 }
                                 KeyCode::Enter => {
-                                    let linect: String = buf.contents[buf.cursor_pos.line]
-                                        .drain(buf.cursor_pos.idx..)
-                                        .collect();
-                                    buf.newline_below(linect);
+                                    match buf.contents[buf.cursor_pos.line]
+                                        .chars()
+                                        .nth(buf.cursor_pos.idx)
+                                    {
+                                        Some('}') | Some(']') | Some(')') => {
+                                            if buf.indent_lvl != 0 {
+                                                buf.indent_lvl -= 1;
+                                            }
+                                            if buf.cursor_pos.idx != 0 {
+                                                let linect: String = buf.contents
+                                                    [buf.cursor_pos.line]
+                                                    .drain(buf.cursor_pos.idx..)
+                                                    .collect();
+                                                buf.newline_below(linect);
+                                            }
+                                            buf.move_up();
+                                            buf.indent_lvl += 1;
+                                            buf.newline_below("".to_string());
+                                        }
+                                        _ => {
+                                            let linect: String = buf.contents[buf.cursor_pos.line]
+                                                .drain(buf.cursor_pos.idx..)
+                                                .collect();
+                                            buf.newline_below(linect);
+                                        }
+                                    }
                                 }
                                 KeyCode::Char(c) => {
                                     buf.type_char(c);
                                     match c {
-                                        '[' => {
-                                            buf.type_char(']');
-                                            buf.indent_lvl += 1;
-                                            buf.move_left();
-                                        }
-                                        '{' => {
-                                            buf.type_char('}');
-                                            buf.indent_lvl += 1;
-                                            buf.move_left();
-                                        }
-                                        '}' => {
-                                            if buf.contents[buf.cursor_pos.line]
-                                                .chars()
-                                                .nth(buf.cursor_pos.idx)
-                                                .unwrap_or(' ')
-                                                == '}'
-                                            {
-                                                buf.backspace();
-                                                buf.move_right();
-                                            }
-                                            if buf.indent_lvl != 0 {
-                                                buf.indent_lvl -= 1;
-                                            }
-                                        }
-                                        ']' => {
-                                            if buf.contents[buf.cursor_pos.line]
-                                                .chars()
-                                                .nth(buf.cursor_pos.idx)
-                                                .unwrap_or(' ')
-                                                == ']'
-                                            {
-                                                buf.backspace();
-                                                buf.move_right();
-                                                if buf.indent_lvl != 0 {
-                                                    buf.indent_lvl -= 1;
-                                                }
-                                            }
-                                        }
+                                        '{' | '}' | '[' | ']' | '(' | ')' => autopair!(
+                                            buf, c,
+                                            '{', '}';
+                                            '[', ']';
+                                            '(', ')'
+                                        ),
                                         _ => {}
                                     }
                                 }
