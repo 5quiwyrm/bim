@@ -13,6 +13,15 @@ pub enum Action {
     Save,
 }
 
+impl fmt::Display for Action {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Action::None => write!(f, ""),
+            Action::Save => write!(f, "save"),
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Mode {
     Default,
@@ -20,6 +29,22 @@ pub enum Mode {
     Replace,
     Find,
     ReplaceStr,
+    Goto,
+    Switch,
+}
+
+impl Mode {
+    pub fn from_str(s: &str) -> Mode {
+        match s {
+            "paste" | "p" => Mode::Paste,
+            "replace" | "r" => Mode::Replace,
+            "find" | "f" => Mode::Find,
+            "replacestr" | "rs" => Mode::ReplaceStr,
+            "goto" | "g" => Mode::Goto,
+            "switch" | "s" => Mode::Switch,
+            _ => Mode::Default,
+        }
+    }
 }
 
 impl fmt::Display for Mode {
@@ -30,6 +55,18 @@ impl fmt::Display for Mode {
             Mode::Replace => write!(f, "replace"),
             Mode::Find => write!(f, "find"),
             Mode::ReplaceStr => write!(f, "replace str"),
+            Mode::Goto => write!(f, "goto"),
+            Mode::Switch => write!(f, "switch to mode"),
+        }
+    }
+}
+
+impl Mode {
+    pub fn show_temp(&self) -> bool {
+        use Mode::*;
+        match self {
+            Default | Paste | Replace | Find | ReplaceStr => false,
+            Goto | Switch => true,
         }
     }
 }
@@ -42,6 +79,7 @@ pub struct Buffer {
     pub lastact: Action,
     pub find_str: String,
     pub replace_str: String,
+    pub temp_str: String,
     pub marklist: HashMap<char, Cursor>,
     pub indent_lvl: usize,
     pub mode: Mode,
@@ -65,6 +103,7 @@ impl Buffer {
             lastact: Action::None,
             find_str: String::new(),
             replace_str: String::new(),
+            temp_str: String::new(),
             marklist: HashMap::new(),
             indent_lvl: 0,
             mode: Mode::Default,
@@ -177,15 +216,16 @@ impl Buffer {
         let (widthu, heightu) = terminal::size().unwrap();
         let width = widthu as usize;
         let height = heightu as usize;
-        if self.cursor_pos.line > self.top + height - 5 {
-            self.top = self.cursor_pos.line - height + 5;
+        let bottom_pad = 2;
+        if self.cursor_pos.line > self.top + height - bottom_pad - 3 {
+            self.top = self.cursor_pos.line - height + bottom_pad + 3;
         }
         if self.cursor_pos.line < self.top {
             self.top = self.cursor_pos.line;
         }
 
         let mut linectr = self.top;
-        while linectr < self.top + height - 3 && linectr < self.contents.len() {
+        while linectr < self.top + height - bottom_pad && linectr < self.contents.len() {
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
                 let mut line_content = self.contents[self.cursor_pos.line].chars();
@@ -220,7 +260,7 @@ impl Buffer {
         println!(
             "{: <width$}",
             format!(
-                "({}, {}) [{}] (>: {:?}) {}{}(mod: {})",
+                "({}, {}) [{}] (>: {:?}) {}{}(act: {})",
                 self.cursor_pos.line + 1,
                 self.cursor_pos.idx + 1,
                 self.filepath,
@@ -235,15 +275,20 @@ impl Buffer {
                 } else {
                     format!("(-> {:?}) ", self.replace_str)
                 },
-                self.mode,
+                self.lastact,
             )
         );
         print!(
             "{: <width$}",
-            match self.lastact {
-                Action::Save => "saved!",
-                _ => "",
-            }
-        );
+            format!(
+                "{}{}",
+                self.mode,
+                if self.mode.show_temp() {
+                    format!(": {}", self.temp_str)
+                } else {
+                    "".to_string()
+                }
+            )
+        )
     }
 }

@@ -73,6 +73,9 @@ fn main() {
                                     Mode::ReplaceStr => {
                                         buf.replace_str.pop();
                                     }
+                                    m if m.show_temp() => {
+                                        buf.temp_str.pop();
+                                    }
                                     _ => {
                                         buf.backspace();
                                     }
@@ -82,10 +85,33 @@ fn main() {
                                     buf.backspace();
                                 }
                                 KeyCode::Enter => {
-                                    if buf.mode == Mode::Find || buf.mode == Mode::ReplaceStr {
-                                        buf.mode = Mode::Default;
-                                    } else {
-                                        match buf.contents[buf.cursor_pos.line]
+                                    match buf.mode {
+                                        Mode::Find | Mode::ReplaceStr => {
+                                            buf.mode = Mode::Default;
+                                        }
+                                        Mode::Switch => {
+                                            buf.mode = Mode::from_str(&buf.temp_str);
+                                            buf.temp_str.clear();
+                                        }
+                                        Mode::Goto => {
+                                            if let Ok(lineno) = buf.temp_str.parse::<usize>() {
+                                                if lineno < buf.contents.len() {
+                                                    if lineno != 0 {
+                                                        buf.cursor_pos.line = lineno - 1;
+                                                    } else {
+                                                        buf.cursor_pos.line = 0;
+                                                    }
+                                                    if buf.contents[buf.cursor_pos.line].len()
+                                                        < buf.cursor_pos.idx
+                                                    {
+                                                        buf.cursor_pos.idx =
+                                                            buf.contents[buf.cursor_pos.line].len();
+                                                    }
+                                                }
+                                            }
+                                            buf.mode = Mode::Default;
+                                        }
+                                        _ => match buf.contents[buf.cursor_pos.line]
                                             .chars()
                                             .nth(buf.cursor_pos.idx)
                                         {
@@ -111,8 +137,8 @@ fn main() {
                                                     .collect();
                                                 buf.newline_below(linect);
                                             }
-                                        }
-                                    }
+                                        },
+                                    };
                                 }
                                 KeyCode::Char(c) => {
                                     match buf.mode {
@@ -121,6 +147,9 @@ fn main() {
                                         }
                                         Mode::ReplaceStr => {
                                             buf.replace_str.push(c);
+                                        }
+                                        m if m.show_temp() => {
+                                            buf.temp_str.push(c);
                                         }
                                         _ => {
                                             buf.type_char(c);
@@ -325,20 +354,8 @@ fn main() {
                                     }
                                 }
                                 KeyCode::Char('x') => {
-                                    buf.move_left();
-                                    if let Some(markchar) = buf.contents[buf.cursor_pos.line]
-                                        .chars()
-                                        .nth(buf.cursor_pos.idx)
-                                    {
-                                        buf.move_right();
-                                        buf.backspace();
-                                        buf.mode = match markchar {
-                                            'p' => Mode::Paste,
-                                            'r' => Mode::Replace,
-                                            'f' => Mode::Find,
-                                            _ => Mode::Default,
-                                        }
-                                    }
+                                    buf.mode = Mode::Switch;
+                                    buf.temp_str.clear();
                                 }
                                 KeyCode::Char('h') => {
                                     buf.contents[buf.cursor_pos.line].replace_range(
@@ -350,8 +367,10 @@ fn main() {
                                             ..buf.cursor_pos.idx,
                                         &buf.replace_str,
                                     );
-                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                        buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
+                                    {
+                                        buf.cursor_pos.idx =
+                                            buf.contents[buf.cursor_pos.line].len();
                                     }
                                 }
                                 KeyCode::Char('r') => {
