@@ -342,7 +342,11 @@ fn main() {
                                 }
                                 KeyCode::Char('h') => {
                                     buf.contents[buf.cursor_pos.line].replace_range(
-                                        (buf.cursor_pos.idx - buf.find_str.len())
+                                        (if buf.cursor_pos.idx >= buf.find_str.len() {
+                                            buf.cursor_pos.idx - buf.find_str.len()
+                                        } else {
+                                            0
+                                        })
                                             ..buf.cursor_pos.idx,
                                         &buf.replace_str,
                                     );
