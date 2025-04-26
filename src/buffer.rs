@@ -228,12 +228,12 @@ impl Buffer {
                 if self.find_str.is_empty() {
                     "".to_string()
                 } else {
-                    format!("(find: {:?}) ", self.find_str)
+                    format!("(?: {:?}) ", self.find_str)
                 },
                 if self.replace_str.is_empty() {
                     "".to_string()
                 } else {
-                    format!("(replace: {:?}) ", self.replace_str)
+                    format!("(-> {:?}) ", self.replace_str)
                 },
                 self.mode,
             )

@@ -350,6 +350,9 @@ fn main() {
                                             ..buf.cursor_pos.idx,
                                         &buf.replace_str,
                                     );
+                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                        buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                    }
                                 }
                                 KeyCode::Char('r') => {
                                     if buf.mode == Mode::ReplaceStr {
