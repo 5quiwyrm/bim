@@ -1,225 +1,17 @@
+mod buffer;
+use buffer::*;
+
 use crossterm::{
     event::{self, Event, KeyCode, KeyModifiers},
     terminal,
 };
 
 use std::{
-    collections::HashMap,
     env::args,
     fs,
     io::{self, Write},
     time::Duration,
 };
-#[derive(Copy, Clone)]
-struct Cursor {
-    line: usize,
-    idx: usize,
-}
-
-enum Action {
-    None,
-    Save,
-}
-
-struct Buffer {
-    contents: Vec<String>,
-    cursor_pos: Cursor,
-    top: usize,
-    filepath: String,
-    lastact: Action,
-    search_char: char,
-    marklist: HashMap<char, Cursor>,
-    indent_lvl: usize,
-}
-
-impl Buffer {
-    fn new(filepath: String) -> Self {
-        let contents: Vec<String> = fs::read_to_string(&filepath)
-            .unwrap_or({
-                fs::File::create(&filepath).unwrap();
-                "".to_string()
-            })
-            .lines()
-            .map(|s| s.to_string())
-            .collect();
-        Buffer {
-            contents,
-            top: 0,
-            cursor_pos: Cursor { line: 0, idx: 0 },
-            filepath,
-            lastact: Action::None,
-            search_char: ' ',
-            marklist: HashMap::new(),
-            indent_lvl: 0,
-        }
-    }
-
-    #[inline]
-    fn move_left(&mut self) -> bool {
-        if self.cursor_pos.idx == 0 {
-            if self.cursor_pos.line != 0 {
-                self.cursor_pos.line -= 1;
-                self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
-            } else {
-                return false;
-            }
-        } else {
-            self.cursor_pos.idx -= 1;
-        }
-        true
-    }
-
-    #[inline]
-    fn move_right(&mut self) -> bool {
-        if self.cursor_pos.idx == self.contents[self.cursor_pos.line].len()
-            || self.contents[self.cursor_pos.line].is_empty()
-        {
-            if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {
-                self.cursor_pos.line += 1;
-                self.cursor_pos.idx = 0;
-            } else {
-                return false;
-            }
-        } else {
-            self.cursor_pos.idx += 1;
-        }
-        true
-    }
-
-    #[inline]
-    fn move_up(&mut self) -> bool {
-        if self.cursor_pos.line != 0 {
-            self.cursor_pos.line -= 1;
-            if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
-                self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
-            }
-            true
-        } else {
-            false
-        }
-    }
-
-    #[inline]
-    fn move_down(&mut self) -> bool {
-        if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {
-            self.cursor_pos.line += 1;
-            if self.cursor_pos.idx > self.contents[self.cursor_pos.line].len() {
-                self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
-            }
-            true
-        } else {
-            false
-        }
-    }
-
-    #[inline]
-    fn save(&mut self) {
-        let trimmedlines: Vec<&str> = self.contents.iter().map(|s| s.trim_end()).collect();
-        fs::write(self.filepath.clone(), trimmedlines.join("\n")).unwrap();
-        self.lastact = Action::Save;
-    }
-
-    fn backspace(&mut self) {
-        let t = self.cursor_pos.idx;
-        if t == 0 {
-            if self.cursor_pos.line != 0 {
-                let currline = self.contents[self.cursor_pos.line].clone();
-                let oldlen = self.contents[self.cursor_pos.line - 1].len();
-                self.contents[self.cursor_pos.line - 1].push_str(&currline);
-                self.contents.remove(self.cursor_pos.line);
-                self.cursor_pos.line -= 1;
-                self.cursor_pos.idx = oldlen;
-            } else if !self.contents[0].is_empty() {
-                self.contents[0].remove(0);
-            }
-        } else {
-            self.contents[self.cursor_pos.line].remove(t - 1);
-            self.cursor_pos.idx -= 1;
-        }
-    }
-
-    #[inline]
-    fn type_char(&mut self, ch: char) {
-        self.contents[self.cursor_pos.line].insert(self.cursor_pos.idx, ch);
-        self.cursor_pos.idx += 1;
-    }
-
-    fn newline_below(&mut self, linect: String) {
-        let mut newline = String::new();
-        for _ in 0..(self.indent_lvl * 4) {
-            newline.push(' ');
-        }
-        newline.push_str(&linect);
-        self.cursor_pos.line += 1;
-        self.cursor_pos.idx = self.indent_lvl * 4;
-        self.contents.insert(self.cursor_pos.line, newline);
-    }
-
-    fn print(&mut self) {
-        print!("\x1b[J\x1b[H");
-        let (widthu, heightu) = terminal::size().unwrap();
-        let width = widthu as usize;
-        let height = heightu as usize;
-        if self.cursor_pos.line > self.top + height - 5 {
-            self.top = self.cursor_pos.line - height + 5;
-        }
-        if self.cursor_pos.line < self.top {
-            self.top = self.cursor_pos.line;
-        }
-
-        let mut linectr = self.top;
-        while linectr < self.top + height - 3 && linectr < self.contents.len() {
-            if linectr == self.cursor_pos.line {
-                let mut i = 0;
-                let mut line_content = self.contents[self.cursor_pos.line].chars();
-                while i < width {
-                    let content = line_content.next().unwrap_or(' ');
-                    let id = self.indent_lvl * 4;
-                    match i {
-                        a if a == self.cursor_pos.idx => {
-                            print!("\x1b[47m\x1b[30m{content}\x1b[0m");
-                        }
-                        b if b == id => {
-                            if content == ' ' {
-                                print!("\x1b[33m\x1b[2m|\x1b[0m");
-                            } else {
-                                print!("\x1b[33m{content}\x1b[0m");
-                            }
-                        }
-                        _ => {
-                            print!("{content}");
-                        }
-                    }
-                    i += 1;
-                }
-                println!();
-            } else if self.contents[linectr].len() > width {
-                println!("{}", &self.contents[linectr][0..width]);
-            } else {
-                println!("{: <width$}", self.contents[linectr]);
-            }
-            linectr += 1;
-        }
-        println!(
-            "{: <width$}",
-            format!(
-                "({}, {}) [{}] (>: {:?}) (/: {:?})",
-                self.cursor_pos.line + 1,
-                self.cursor_pos.idx + 1,
-                self.filepath,
-                self.indent_lvl,
-                self.search_char,
-            )
-        );
-        print!(
-            "{: <width$}",
-            match self.lastact {
-                Action::Save => "saved!",
-                _ => "",
-            }
-        );
-    }
-}
 
 macro_rules! autopair {
     ($buffer: ident, $char: expr, $($open: expr, $close: expr);*) => {
@@ -271,51 +63,75 @@ fn main() {
                     if key.kind != event::KeyEventKind::Release {
                         match key.modifiers {
                             KeyModifiers::NONE | KeyModifiers::SHIFT => match key.code {
+                                KeyCode::Esc => {
+                                    buf.mode = Mode::Default;
+                                }
                                 KeyCode::Backspace => {
-                                    buf.backspace();
+                                    if buf.mode != Mode::Find {
+                                        buf.backspace()
+                                    } else {
+                                        _ = buf.find_str.pop();
+                                    }
                                 }
                                 KeyCode::Delete => {
                                     buf.move_right();
                                     buf.backspace();
                                 }
                                 KeyCode::Enter => {
-                                    match buf.contents[buf.cursor_pos.line]
-                                        .chars()
-                                        .nth(buf.cursor_pos.idx)
-                                    {
-                                        Some('}') | Some(']') | Some(')') => {
-                                            if buf.indent_lvl != 0 {
-                                                buf.indent_lvl -= 1;
+                                    if buf.mode == Mode::Find {
+                                        buf.mode = Mode::Default;
+                                    } else {
+                                        match buf.contents[buf.cursor_pos.line]
+                                            .chars()
+                                            .nth(buf.cursor_pos.idx)
+                                        {
+                                            Some('}') | Some(']') | Some(')') => {
+                                                if buf.indent_lvl != 0 {
+                                                    buf.indent_lvl -= 1;
+                                                }
+                                                if buf.cursor_pos.idx != 0 {
+                                                    let linect: String = buf.contents
+                                                        [buf.cursor_pos.line]
+                                                        .drain(buf.cursor_pos.idx..)
+                                                        .collect();
+                                                    buf.newline_below(linect);
+                                                }
+                                                buf.move_up();
+                                                buf.indent_lvl += 1;
+                                                buf.newline_below("".to_string());
                                             }
-                                            if buf.cursor_pos.idx != 0 {
+                                            _ => {
                                                 let linect: String = buf.contents
                                                     [buf.cursor_pos.line]
                                                     .drain(buf.cursor_pos.idx..)
                                                     .collect();
                                                 buf.newline_below(linect);
                                             }
-                                            buf.move_up();
-                                            buf.indent_lvl += 1;
-                                            buf.newline_below("".to_string());
-                                        }
-                                        _ => {
-                                            let linect: String = buf.contents[buf.cursor_pos.line]
-                                                .drain(buf.cursor_pos.idx..)
-                                                .collect();
-                                            buf.newline_below(linect);
                                         }
                                     }
                                 }
                                 KeyCode::Char(c) => {
-                                    buf.type_char(c);
+                                    if buf.mode != Mode::Find {
+                                        buf.type_char(c);
+                                    } else {
+                                        buf.find_str.push(c);
+                                    }
                                     match c {
-                                        '{' | '}' | '[' | ']' | '(' | ')' => autopair!(
-                                            buf, c,
-                                            '{', '}';
-                                            '[', ']';
-                                            '(', ')'
-                                        ),
+                                        '{' | '}' | '[' | ']' | '(' | ')'
+                                            if buf.mode != Mode::Paste =>
+                                        {
+                                            autopair!(
+                                                buf, c,
+                                                '{', '}';
+                                                '[', ']';
+                                                '(', ')'
+                                            )
+                                        }
                                         _ => {}
+                                    }
+                                    if buf.mode == Mode::Replace {
+                                        buf.move_right();
+                                        buf.backspace();
                                     }
                                 }
                                 KeyCode::Left => {
@@ -419,13 +235,12 @@ fn main() {
                                     buf.cursor_pos.idx = spaces;
                                 }
                                 KeyCode::Char('/') => {
-                                    buf.move_left();
-                                    buf.search_char = buf.contents[buf.cursor_pos.line]
-                                        .chars()
-                                        .nth(buf.cursor_pos.idx)
-                                        .unwrap_or(' ');
-                                    buf.move_right();
-                                    buf.backspace();
+                                    if buf.mode == Mode::Find {
+                                        buf.mode = Mode::Default;
+                                    } else {
+                                        buf.mode = Mode::Find;
+                                        buf.find_str.clear();
+                                    }
                                 }
                                 KeyCode::Char('n') => {
                                     if buf.move_right() {
@@ -433,10 +248,10 @@ fn main() {
                                             let prevpos = buf.cursor_pos;
                                             if let Some(p) = buf.contents[buf.cursor_pos.line]
                                                 [buf.cursor_pos.idx..]
-                                                .chars()
-                                                .position(|c| c == buf.search_char)
+                                                .find(buf.find_str.as_str())
                                             {
                                                 buf.cursor_pos.idx += p;
+                                                buf.cursor_pos.idx += buf.find_str.len();
                                                 break 'findfwd;
                                             } else {
                                                 buf.cursor_pos.idx = 0;
@@ -454,12 +269,10 @@ fn main() {
                                             let prevpos = buf.cursor_pos;
                                             if let Some(p) = buf.contents[buf.cursor_pos.line]
                                                 [0..buf.cursor_pos.idx]
-                                                .chars()
-                                                .rev()
-                                                .position(|c| c == buf.search_char)
+                                                .rfind(buf.find_str.as_str())
                                             {
-                                                buf.cursor_pos.idx -= p;
-                                                buf.cursor_pos.idx -= 1;
+                                                buf.cursor_pos.idx = p;
+                                                buf.cursor_pos.idx += buf.find_str.len();
                                                 break 'findfwd;
                                             } else {
                                                 let stat = buf.move_up();
@@ -498,6 +311,22 @@ fn main() {
                                         if let Some(&loc) = buf.marklist.get(&markchar) {
                                             _ = buf.marklist.insert('_', buf.cursor_pos);
                                             buf.cursor_pos = loc;
+                                        }
+                                    }
+                                }
+                                KeyCode::Char('x') => {
+                                    buf.move_left();
+                                    if let Some(markchar) = buf.contents[buf.cursor_pos.line]
+                                        .chars()
+                                        .nth(buf.cursor_pos.idx)
+                                    {
+                                        buf.move_right();
+                                        buf.backspace();
+                                        buf.mode = match markchar {
+                                            'p' => Mode::Paste,
+                                            'r' => Mode::Replace,
+                                            'f' => Mode::Find,
+                                            _ => Mode::Default,
                                         }
                                     }
                                 }
