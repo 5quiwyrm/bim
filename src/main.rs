@@ -13,6 +13,15 @@ use std::{
     time::Duration,
 };
 
+pub fn get_matching_brace(ch: char) -> char {
+    match ch {
+        '[' => ']',
+        '{' => '}',
+        '(' => ')',
+        c => c,
+    }
+}
+
 macro_rules! autopair {
     ($buffer: ident, $char: expr, $($open: expr, $close: expr);*) => {
         match $char { $(
@@ -381,6 +390,13 @@ fn main() {
                                         buf.replace_str.clear();
                                     }
                                 }
+                                KeyCode::Char('j') => {
+                                    if buf.contents.len() > buf.cursor_pos.line + 1 {
+                                        let l = buf.contents.remove(buf.cursor_pos.line + 1);
+                                        buf.contents[buf.cursor_pos.line].push(' ');
+                                        buf.contents[buf.cursor_pos.line].push_str(l.trim());
+                                    }
+                                }
 
                                 _ => {}
                             },
@@ -408,7 +424,17 @@ fn main() {
                                 KeyCode::Char('t') => {
                                     buf.top = buf.cursor_pos.line;
                                 }
-                                KeyCode::Char('g') => {}
+                                KeyCode::Backspace => {
+                                    while buf.backspace().unwrap_or('a').is_whitespace() {}
+                                    let mut last = ' ';
+                                    'killword: loop {
+                                        last = buf.backspace().unwrap_or(' ');
+                                        if !last.is_alphanumeric() {
+                                            break 'killword;
+                                        }
+                                    }
+                                    buf.type_char(last);
+                                }
                                 _ => {}
                             },
                             _ => {}
@@ -427,6 +453,5 @@ fn main() {
     }
     print!("\x1bc");
     buf.save();
-
     _ = terminal::disable_raw_mode();
 }

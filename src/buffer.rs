@@ -175,7 +175,7 @@ impl Buffer {
         self.lastact = Action::Save;
     }
 
-    pub fn backspace(&mut self) {
+    pub fn backspace(&mut self) -> Option<char> {
         let t = self.cursor_pos.idx;
         if t == 0 {
             if self.cursor_pos.line != 0 {
@@ -185,12 +185,15 @@ impl Buffer {
                 self.contents.remove(self.cursor_pos.line);
                 self.cursor_pos.line -= 1;
                 self.cursor_pos.idx = oldlen;
+                return Some('\n');
             } else if !self.contents[0].is_empty() {
-                self.contents[0].remove(0);
+                return Some(self.contents[0].remove(0));
+            } else {
+                return None;
             }
         } else {
-            self.contents[self.cursor_pos.line].remove(t - 1);
             self.cursor_pos.idx -= 1;
+            return Some(self.contents[self.cursor_pos.line].remove(t - 1));
         }
     }
 
@@ -257,27 +260,26 @@ impl Buffer {
             }
             linectr += 1;
         }
-        println!(
-            "{: <width$}",
-            format!(
-                "({}, {}) [{}] (>: {:?}) {}{}(act: {})",
-                self.cursor_pos.line + 1,
-                self.cursor_pos.idx + 1,
-                self.filepath,
-                self.indent_lvl,
-                if self.find_str.is_empty() {
-                    "".to_string()
-                } else {
-                    format!("(?: {:?}) ", self.find_str)
-                },
-                if self.replace_str.is_empty() {
-                    "".to_string()
-                } else {
-                    format!("(-> {:?}) ", self.replace_str)
-                },
-                self.lastact,
-            )
+        let mut bottom_bar = format!(
+            "({}, {}) [{}] (>: {:?}) {}{}(act: {})",
+            self.cursor_pos.line + 1,
+            self.cursor_pos.idx + 1,
+            self.filepath,
+            self.indent_lvl,
+            if self.find_str.is_empty() {
+                "".to_string()
+            } else {
+                format!("(?: {:?}) ", self.find_str)
+            },
+            if self.replace_str.is_empty() {
+                "".to_string()
+            } else {
+                format!("(-> {:?}) ", self.replace_str)
+            },
+            self.lastact,
         );
+        bottom_bar.truncate(width);
+        println!("{: <width$}", bottom_bar,);
         print!(
             "{: <width$}",
             format!(
