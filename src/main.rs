@@ -441,12 +441,9 @@ fn main() {
                         }
                     }
                 }
-                Event::Paste(s) => {
-                    buf.contents[buf.cursor_pos.line].insert_str(buf.cursor_pos.idx, &s);
-                }
                 _ => {}
             }
-            buf.print();
+            buf.print(event);
             stdout.flush().unwrap();
             buf.lastact = Action::None;
         }

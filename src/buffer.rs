@@ -1,5 +1,13 @@
-use crossterm::terminal;
+use crossterm::{event, terminal};
 use std::{collections::HashMap, fmt, fs};
+
+fn pretty_str_event(event: &event::Event) -> String {
+    if let event::Event::Key(key) = event {
+        format!("{:?}|{:?}", key.code, key.modifiers)
+    } else {
+        "".to_string()
+    }
+}
 
 #[derive(Copy, Clone)]
 pub struct Cursor {
@@ -214,7 +222,7 @@ impl Buffer {
         self.contents.insert(self.cursor_pos.line, newline);
     }
 
-    pub fn print(&mut self) {
+    pub fn print(&mut self, event: event::Event) {
         print!("\x1b[J\x1b[H");
         let (widthu, heightu) = terminal::size().unwrap();
         let width = widthu as usize;
@@ -261,7 +269,7 @@ impl Buffer {
             linectr += 1;
         }
         let mut bottom_bar = format!(
-            "({}, {}) [{}] (>: {:?}) {}{}(act: {})",
+            "({}, {}) [{}] (>: {:?}) {}{}(act: {}) {}",
             self.cursor_pos.line + 1,
             self.cursor_pos.idx + 1,
             self.filepath,
@@ -277,6 +285,7 @@ impl Buffer {
                 format!("(-> {:?}) ", self.replace_str)
             },
             self.lastact,
+            pretty_str_event(&event),
         );
         bottom_bar.truncate(width);
         println!("{: <width$}", bottom_bar,);
