@@ -6,7 +6,14 @@ Also Bim sounds like bin, and this reflects the shittiness of this editor.
 This will be a keyboard focused editor, but it will not be much like Vim.
 This will have modes that change what keybinds do.
 
-# Keybinds
+## Usage
+
+To run the project:
+
+`cargo run --release` to only run the project.
+`cargo build --release` to build the project as an executable to a directory.
+
+## Keybinds
 
 Esc -> Switch to default mode (no exceptions)
 Backspace -> Delete char backwards, in all modes, in the buffer being used.
@@ -69,4 +76,3 @@ C-r -> Reloads the file.
 C-Backspace -> Deletes word backwards (this effectively deletes whitespace
   until finding a non-whitespace charatcer, then deletes until finding a
   non-alphanumeric character).
-
