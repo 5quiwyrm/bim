@@ -3,7 +3,11 @@ use std::{collections::HashMap, fmt, fs};
 
 fn pretty_str_event(event: &event::Event) -> String {
     if let event::Event::Key(key) = event {
-        format!("{:?}|{:?}", key.code, key.modifiers)
+        if key.modifiers != event::KeyModifiers::NONE {
+            format!("{} {}", key.modifiers, key.code)
+        } else {
+            format!("{}", key.code)
+        }
     } else {
         "".to_string()
     }

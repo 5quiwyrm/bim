@@ -51,6 +51,23 @@ macro_rules! autopair {
     }
 }
 
+pub enum Mods {
+    None,
+    Ctrl,
+    Alt,
+    CtrlAlt,
+}
+
+impl Mods {
+    fn to_mods(has_alt: bool, has_ctrl: bool) -> Mods {
+        if has_alt {
+            if has_ctrl { Mods::CtrlAlt } else { Mods::Alt }
+        } else {
+            if has_ctrl { Mods::Ctrl } else { Mods::None }
+        }
+    }
+}
+
 fn main() {
     let mut stdout = io::stdout();
     let mut args = args();
@@ -69,8 +86,20 @@ fn main() {
             match event {
                 Event::Key(key) => {
                     if key.kind != event::KeyEventKind::Release {
-                        match key.modifiers {
-                            KeyModifiers::NONE | KeyModifiers::SHIFT => match key.code {
+                        let mods = key.modifiers.iter();
+                        let mut has_alt = false;
+                        let mut has_ctrl = false;
+                        mods.for_each(|m| {
+                            if m == KeyModifiers::ALT {
+                                has_alt = true;
+                            }
+                            if m == KeyModifiers::CONTROL {
+                                has_ctrl = true;
+                            }
+                        });
+                        let modifiers = Mods::to_mods(has_alt, has_ctrl);
+                        match modifiers {
+                            Mods::None => match key.code {
                                 KeyCode::Esc => {
                                     buf.mode = Mode::Default;
                                 }
@@ -216,7 +245,7 @@ fn main() {
                                 }
                                 _ => {}
                             },
-                            KeyModifiers::ALT => match key.code {
+                            Mods::Alt => match key.code {
                                 KeyCode::Char('q') => {
                                     break 'ed;
                                 }
@@ -316,7 +345,7 @@ fn main() {
                                         }
                                     }
                                 }
-                                KeyCode::Char('p') => {
+                                KeyCode::Char('N') => {
                                     if buf.move_left() {
                                         'findfwd: loop {
                                             let prevpos = buf.cursor_pos;
@@ -341,6 +370,13 @@ fn main() {
                                 }
                                 KeyCode::Char('o') => {
                                     buf.newline_below("".to_string());
+                                }
+                                KeyCode::Char('O') => {
+                                    if buf.move_up() {
+                                        buf.newline_below("".to_string());
+                                    } else {
+                                        buf.contents.insert(0, "".to_string());
+                                    }
                                 }
                                 KeyCode::Char('m') => {
                                     buf.move_left();
@@ -405,7 +441,7 @@ fn main() {
 
                                 _ => {}
                             },
-                            KeyModifiers::CONTROL => match key.code {
+                            Mods::Ctrl => match key.code {
                                 KeyCode::Char('r') => {
                                     buf.reload_file();
                                 }
