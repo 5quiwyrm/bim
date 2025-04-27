@@ -445,7 +445,9 @@ fn main() {
                                         break 'killword;
                                     }
                                 }
-                                buf.type_char(last);
+                                if last != '\n' {
+                                    buf.type_char(last);
+                                }
                             }
                             _ => {}
                         },
