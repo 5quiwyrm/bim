@@ -48,7 +48,7 @@ pub enum Mode {
 
 impl Mode {
     pub fn from_str(s: &str) -> Mode {
-        match s {
+        match s.trim() {
             "paste" | "p" => Mode::Paste,
             "replace" | "r" => Mode::Replace,
             "find" | "f" => Mode::Find,

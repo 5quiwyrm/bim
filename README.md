@@ -15,6 +15,7 @@ To run the project:
 
 ## Keybinds
 
+```
 Esc -> Switch to default mode (no exceptions)
 Backspace -> Delete char backwards, in all modes, in the buffer being used.
 Delete -> Delete char forwards, in Default and Paste mode.
@@ -76,3 +77,77 @@ C-r -> Reloads the file.
 C-Backspace -> Deletes word backwards (this effectively deletes whitespace
   until finding a non-whitespace charatcer, then deletes until finding a
   non-alphanumeric character).
+```
+
+## Modes
+
+### Default mode
+
+Aliases in M-x: any, as long as they aren't aliases of other modes.
+Shown in bottom bar as "default".
+
+This is the default editing mode.
+
+### Paste mode
+
+Aliases in M-x: "paste", "p"
+Shown in bottom bar as "paste".
+
+This is used in pasting. It is toggled by doing M-x p <enter>.
+In this mode, autopairs are disabled.
+
+### Replace mode
+
+Aliases in M-x: "replace", "r"
+Shown in bottom bar as "replace".
+
+Essentially like R in vim. Overwrites instead of inserting.
+Exit with <esc>.
+
+### Find mode
+
+Aliases in M-x: "find", "f"
+Shown in bottom bar as "find".
+
+Same as M-/. Using M-x to enter Find mode is discouraged.
+All typed characters are appended to find_str.
+Backspace pops a character from find_str.
+
+### ReplaceStr mode
+
+Aliases in M-x: "replacestr", "rs"
+Shown in bottom bar as "replace str".
+
+Same as M-r. Using M-x to enter ReplaceStr mode is discouraged.
+All typed characters are appended to replace_str.
+Backspace pops a character from replace_str.
+
+### Goto mode
+
+Aliases in M-x: "goto", "g"
+Shown in bottom bar as "goto: ".
+
+The contents of the buffer will be interpreted as a line number and the cursor
+will be moved to that line number.
+If the line number provided is unparseable, nothing will happen.
+If the line number provided is greater than the length of the file, the cursor
+will be put on the bottom line.
+
+### OpenFile mode
+
+Aliasses in M-x: "open", "o", "openfile"
+Shown in bottom bar as "open file: ".
+
+The contents of the buffer will be interpreted as a filepath for the program to
+open.
+If the filepath is illegal, the program will crash.
+
+### Switch mode
+
+Aliases in M-x: "switch", "s"
+Shown in bottom bar as "switch to mode: ".
+
+Exit by pressing <enter> or <esc>.
+Mode for finding modes.
+Writes directly to temp_str.
+
