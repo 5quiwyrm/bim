@@ -12,7 +12,8 @@ use std::{
     time::Duration,
 };
 
-#[must_use] pub fn get_matching_brace(ch: char) -> char {
+#[must_use]
+pub fn get_matching_brace(ch: char) -> char {
     match ch {
         '[' => ']',
         '{' => '}',
@@ -62,7 +63,11 @@ impl Mods {
     fn to_mods(has_alt: bool, has_ctrl: bool) -> Mods {
         if has_alt {
             if has_ctrl { Mods::CtrlAlt } else { Mods::Alt }
-        } else if has_ctrl { Mods::Ctrl } else { Mods::None }
+        } else if has_ctrl {
+            Mods::Ctrl
+        } else {
+            Mods::None
+        }
     }
 }
 
@@ -118,48 +123,48 @@ fn main() {
                                 buf.move_right();
                                 buf.backspace();
                             }
-                            KeyCode::Enter => {
-                                match buf.mode {
-                                    Mode::Find | Mode::ReplaceStr => {
-                                        buf.mode = Mode::Default;
-                                    }
-                                    Mode::Switch => {
-                                        buf.mode = Mode::from_str(&buf.temp_str);
-                                        buf.temp_str.clear();
-                                    }
-                                    Mode::Goto => {
-                                        if let Ok(lineno) = buf.temp_str.parse::<usize>() {
-                                            if lineno < buf.contents.len() {
-                                                if lineno != 0 {
-                                                    buf.cursor_pos.line = lineno - 1;
-                                                } else {
-                                                    buf.cursor_pos.line = 0;
-                                                }
-                                                if buf.contents[buf.cursor_pos.line].len()
-                                                    < buf.cursor_pos.idx
-                                                {
-                                                    buf.cursor_pos.idx =
-                                                        buf.contents[buf.cursor_pos.line].len();
-                                                }
+                            KeyCode::Enter => match buf.mode {
+                                Mode::Find | Mode::ReplaceStr => {
+                                    buf.mode = Mode::Default;
+                                }
+                                Mode::Switch => {
+                                    buf.mode = Mode::from_str(&buf.temp_str);
+                                    buf.temp_str.clear();
+                                }
+                                Mode::Goto => {
+                                    if let Ok(lineno) = buf.temp_str.parse::<usize>() {
+                                        if lineno < buf.contents.len() {
+                                            if lineno != 0 {
+                                                buf.cursor_pos.line = lineno - 1;
+                                            } else {
+                                                buf.cursor_pos.line = 0;
+                                            }
+                                            if buf.contents[buf.cursor_pos.line].len()
+                                                < buf.cursor_pos.idx
+                                            {
+                                                buf.cursor_pos.idx =
+                                                    buf.contents[buf.cursor_pos.line].len();
                                             }
                                         }
-                                        buf.mode = Mode::Default;
                                     }
-                                    Mode::OpenFile => {
-                                        buf.save();
-                                        buf.filepath = buf.temp_str.clone();
-                                        buf.reload_file();
-                                        buf.mode = Mode::Default;
-                                    }
-                                    _ => if let Some('}' | ']' | ')') = buf.contents[buf.cursor_pos.line]
+                                    buf.mode = Mode::Default;
+                                }
+                                Mode::OpenFile => {
+                                    buf.save();
+                                    buf.filepath = buf.temp_str.clone();
+                                    buf.reload_file();
+                                    buf.mode = Mode::Default;
+                                }
+                                _ => {
+                                    if let Some('}' | ']' | ')') = buf.contents[buf.cursor_pos.line]
                                         .chars()
-                                        .nth(buf.cursor_pos.idx) {
+                                        .nth(buf.cursor_pos.idx)
+                                    {
                                         if buf.indent_lvl != 0 {
                                             buf.indent_lvl -= 1;
                                         }
                                         if buf.cursor_pos.idx != 0 {
-                                            let linect: String = buf.contents
-                                                [buf.cursor_pos.line]
+                                            let linect: String = buf.contents[buf.cursor_pos.line]
                                                 .drain(buf.cursor_pos.idx..)
                                                 .collect();
                                             buf.newline_below(linect);
@@ -168,14 +173,13 @@ fn main() {
                                         buf.indent_lvl += 1;
                                         buf.newline_below(String::new());
                                     } else {
-                                        let linect: String = buf.contents
-                                            [buf.cursor_pos.line]
+                                        let linect: String = buf.contents[buf.cursor_pos.line]
                                             .drain(buf.cursor_pos.idx..)
                                             .collect();
                                         buf.newline_below(linect);
-                                    },
+                                    }
                                 }
-                            }
+                            },
                             KeyCode::Char(c) => {
                                 match buf.mode {
                                     Mode::Find => {
@@ -226,8 +230,7 @@ fn main() {
                             }
                             KeyCode::End => {
                                 if !buf.contents[buf.cursor_pos.line].is_empty() {
-                                    buf.cursor_pos.idx =
-                                        buf.contents[buf.cursor_pos.line].len();
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
                             }
                             KeyCode::Tab => {
@@ -337,7 +340,7 @@ fn main() {
                                     }
                                 }
                             }
-                            KeyCode::Char('N') => {
+                            KeyCode::Char('p') => {
                                 if buf.move_left() {
                                     'findfwd: loop {
                                         let prevpos = buf.cursor_pos;
@@ -348,14 +351,13 @@ fn main() {
                                             buf.cursor_pos.idx = p;
                                             buf.cursor_pos.idx += buf.find_str.len();
                                             break 'findfwd;
-                                        } else {
-                                            let stat = buf.move_up();
-                                            buf.cursor_pos.idx =
-                                                buf.contents[buf.cursor_pos.line].len();
-                                            if !stat {
-                                                buf.cursor_pos = prevpos;
-                                                break 'findfwd;
-                                            }
+                                        }
+                                        let stat = buf.move_up();
+                                        buf.cursor_pos.idx =
+                                            buf.contents[buf.cursor_pos.line].len();
+                                        if !stat {
+                                            buf.cursor_pos = prevpos;
+                                            break 'findfwd;
                                         }
                                     }
                                 }
@@ -405,14 +407,11 @@ fn main() {
                                         buf.cursor_pos.idx - buf.find_str.len()
                                     } else {
                                         0
-                                    })
-                                        ..buf.cursor_pos.idx,
+                                    })..buf.cursor_pos.idx,
                                     &buf.replace_str,
                                 );
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
-                                {
-                                    buf.cursor_pos.idx =
-                                        buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
                             }
                             KeyCode::Char('r') => {
@@ -450,7 +449,7 @@ fn main() {
                             }
                             _ => {}
                         },
-                        _ => {}
+                        Mods::CtrlAlt => {}
                     }
                 }
             }
