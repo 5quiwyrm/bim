@@ -8,7 +8,6 @@ use crossterm::{
 
 use std::{
     env::args,
-    fs,
     io::{self, Write},
     time::Duration,
 };
@@ -118,6 +117,12 @@ fn main() {
                                                     }
                                                 }
                                             }
+                                            buf.mode = Mode::Default;
+                                        }
+                                        Mode::OpenFile => {
+                                            buf.save();
+                                            buf.filepath = buf.temp_str.clone();
+                                            buf.reload_file();
                                             buf.mode = Mode::Default;
                                         }
                                         _ => match buf.contents[buf.cursor_pos.line]
@@ -402,27 +407,7 @@ fn main() {
                             },
                             KeyModifiers::CONTROL => match key.code {
                                 KeyCode::Char('r') => {
-                                    buf.contents = fs::read_to_string(&buf.filepath)
-                                        .unwrap()
-                                        .lines()
-                                        .map(|s| s.to_string())
-                                        .collect();
-                                    if buf.contents.len() < buf.cursor_pos.line {
-                                        buf.cursor_pos.line = if buf.contents.is_empty() {
-                                            0
-                                        } else {
-                                            buf.contents.len() - 1
-                                        };
-                                    }
-                                    if buf.contents[buf.cursor_pos.line].len() < buf.cursor_pos.idx
-                                    {
-                                        buf.cursor_pos.idx =
-                                            buf.contents[buf.cursor_pos.line].len();
-                                    }
-                                    buf.save();
-                                }
-                                KeyCode::Char('t') => {
-                                    buf.top = buf.cursor_pos.line;
+                                    buf.reload_file();
                                 }
                                 KeyCode::Backspace => {
                                     while buf.backspace().unwrap_or('a').is_whitespace() {}

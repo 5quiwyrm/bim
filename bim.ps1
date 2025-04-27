@@ -1,1 +1,1 @@
-"./target/release/bim $args" | iex
+./target/release/bim $args" | iex

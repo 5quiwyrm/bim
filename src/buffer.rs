@@ -38,6 +38,7 @@ pub enum Mode {
     Find,
     ReplaceStr,
     Goto,
+    OpenFile,
     Switch,
 }
 
@@ -50,6 +51,7 @@ impl Mode {
             "replacestr" | "rs" => Mode::ReplaceStr,
             "goto" | "g" => Mode::Goto,
             "switch" | "s" => Mode::Switch,
+            "open" | "o" | "openfile" => Mode::OpenFile,
             _ => Mode::Default,
         }
     }
@@ -64,6 +66,7 @@ impl fmt::Display for Mode {
             Mode::Find => write!(f, "find"),
             Mode::ReplaceStr => write!(f, "replace str"),
             Mode::Goto => write!(f, "goto"),
+            Mode::OpenFile => write!(f, "open file"),
             Mode::Switch => write!(f, "switch to mode"),
         }
     }
@@ -74,7 +77,7 @@ impl Mode {
         use Mode::*;
         match self {
             Default | Paste | Replace | Find | ReplaceStr => false,
-            Goto | Switch => true,
+            Goto | Switch | OpenFile => true,
         }
     }
 }
@@ -220,6 +223,25 @@ impl Buffer {
         self.cursor_pos.line += 1;
         self.cursor_pos.idx = self.indent_lvl * 4;
         self.contents.insert(self.cursor_pos.line, newline);
+    }
+
+    pub fn reload_file(&mut self) {
+        self.contents = fs::read_to_string(&self.filepath)
+            .unwrap_or("\n".to_string())
+            .lines()
+            .map(|s| s.to_string())
+            .collect();
+        if self.contents.len() < self.cursor_pos.line {
+            self.cursor_pos.line = if self.contents.is_empty() {
+                0
+            } else {
+                self.contents.len() - 1
+            };
+        }
+        if self.contents[self.cursor_pos.line].len() < self.cursor_pos.idx {
+            self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
+        }
+        self.save();
     }
 
     pub fn print(&mut self, event: event::Event) {
