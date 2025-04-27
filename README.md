@@ -12,6 +12,8 @@ To run the project:
 
 `cargo run --release` to only run the project.
 `cargo build --release` to build the project as an executable to a directory.
+Once the executable is built you can run it by invoking it.
+You are able to pass a filepath to it as an argument for the file to be opened.
 
 ## Keybinds
 
