@@ -12,7 +12,7 @@ use std::{
     time::Duration,
 };
 
-pub fn get_matching_brace(ch: char) -> char {
+#[must_use] pub fn get_matching_brace(ch: char) -> char {
     match ch {
         '[' => ']',
         '{' => '}',
@@ -151,34 +151,30 @@ fn main() {
                                         buf.reload_file();
                                         buf.mode = Mode::Default;
                                     }
-                                    _ => match buf.contents[buf.cursor_pos.line]
+                                    _ => if let Some('}' | ']' | ')') = buf.contents[buf.cursor_pos.line]
                                         .chars()
-                                        .nth(buf.cursor_pos.idx)
-                                    {
-                                        Some('}') | Some(']') | Some(')') => {
-                                            if buf.indent_lvl != 0 {
-                                                buf.indent_lvl -= 1;
-                                            }
-                                            if buf.cursor_pos.idx != 0 {
-                                                let linect: String = buf.contents
-                                                    [buf.cursor_pos.line]
-                                                    .drain(buf.cursor_pos.idx..)
-                                                    .collect();
-                                                buf.newline_below(linect);
-                                            }
-                                            buf.move_up();
-                                            buf.indent_lvl += 1;
-                                            buf.newline_below("".to_string());
+                                        .nth(buf.cursor_pos.idx) {
+                                        if buf.indent_lvl != 0 {
+                                            buf.indent_lvl -= 1;
                                         }
-                                        _ => {
+                                        if buf.cursor_pos.idx != 0 {
                                             let linect: String = buf.contents
                                                 [buf.cursor_pos.line]
                                                 .drain(buf.cursor_pos.idx..)
                                                 .collect();
                                             buf.newline_below(linect);
                                         }
+                                        buf.move_up();
+                                        buf.indent_lvl += 1;
+                                        buf.newline_below(String::new());
+                                    } else {
+                                        let linect: String = buf.contents
+                                            [buf.cursor_pos.line]
+                                            .drain(buf.cursor_pos.idx..)
+                                            .collect();
+                                        buf.newline_below(linect);
                                     },
-                                };
+                                }
                             }
                             KeyCode::Char(c) => {
                                 match buf.mode {
@@ -204,7 +200,7 @@ fn main() {
                                             '{', '}';
                                             '[', ']';
                                             '(', ')'
-                                        )
+                                        );
                                     }
                                     _ => {}
                                 }
@@ -287,7 +283,7 @@ fn main() {
                                 } else {
                                     buf.cursor_pos.line += height;
                                 }
-                                buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len()
+                                buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                             }
                             KeyCode::Char('l') => {
                                 buf.contents.remove(buf.cursor_pos.line);
@@ -332,12 +328,11 @@ fn main() {
                                             buf.cursor_pos.idx += p;
                                             buf.cursor_pos.idx += buf.find_str.len();
                                             break 'findfwd;
-                                        } else {
-                                            buf.cursor_pos.idx = 0;
-                                            if !buf.move_down() {
-                                                buf.cursor_pos = prevpos;
-                                                break 'findfwd;
-                                            }
+                                        }
+                                        buf.cursor_pos.idx = 0;
+                                        if !buf.move_down() {
+                                            buf.cursor_pos = prevpos;
+                                            break 'findfwd;
                                         }
                                     }
                                 }
@@ -366,13 +361,13 @@ fn main() {
                                 }
                             }
                             KeyCode::Char('o') => {
-                                buf.newline_below("".to_string());
+                                buf.newline_below(String::new());
                             }
                             KeyCode::Char('O') => {
                                 if buf.move_up() {
-                                    buf.newline_below("".to_string());
+                                    buf.newline_below(String::new());
                                 } else {
-                                    buf.contents.insert(0, "".to_string());
+                                    buf.contents.insert(0, String::new());
                                 }
                             }
                             KeyCode::Char('m') => {

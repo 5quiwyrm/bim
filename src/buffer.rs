@@ -3,13 +3,13 @@ use std::{collections::HashMap, fmt, fs};
 
 fn pretty_str_event(event: &event::Event) -> String {
     if let event::Event::Key(key) = event {
-        if key.modifiers != event::KeyModifiers::NONE {
-            format!("{} {}", key.modifiers, key.code)
-        } else {
+        if key.modifiers == event::KeyModifiers::NONE {
             format!("{}", key.code)
+        } else {
+            format!("{} {}", key.modifiers, key.code)
         }
     } else {
-        "".to_string()
+        String::new()
     }
 }
 
@@ -304,12 +304,12 @@ impl Buffer {
             self.filepath,
             self.indent_lvl,
             if self.find_str.is_empty() {
-                "".to_string()
+                String::new()
             } else {
                 format!("(?: {:?}) ", self.find_str)
             },
             if self.replace_str.is_empty() {
-                "".to_string()
+                String::new()
             } else {
                 format!("(-> {:?}) ", self.replace_str)
             },
@@ -317,7 +317,7 @@ impl Buffer {
             pretty_str_event(&event),
         );
         bottom_bar.truncate(width);
-        tb_printed.push_str(format!("{: <width$}", bottom_bar).as_str());
+        tb_printed.push_str(format!("{bottom_bar: <width$}").as_str());
         tb_printed.push_str(
             format!(
                 "{: <width$}",
@@ -327,12 +327,12 @@ impl Buffer {
                     if self.mode.show_temp() {
                         format!(": {}", self.temp_str)
                     } else {
-                        "".to_string()
+                        String::new()
                     }
                 )
             )
             .as_str(),
         );
-        print!("{}", tb_printed);
+        print!("{tb_printed}");
     }
 }
