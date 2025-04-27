@@ -200,7 +200,7 @@ impl Buffer {
                 self.contents.remove(self.cursor_pos.line);
                 self.cursor_pos.line -= 1;
                 self.cursor_pos.idx = oldlen;
-                return Some('\n');
+                Some('\n')
             } else if !self.contents[0].is_empty() {
                 return Some(self.contents[0].remove(0));
             } else {
@@ -208,7 +208,7 @@ impl Buffer {
             }
         } else {
             self.cursor_pos.idx -= 1;
-            return Some(self.contents[self.cursor_pos.line].remove(t - 1));
+            Some(self.contents[self.cursor_pos.line].remove(t - 1))
         }
     }
 
