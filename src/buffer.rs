@@ -234,6 +234,7 @@ impl Buffer {
         if self.cursor_pos.line < self.top {
             self.top = self.cursor_pos.line;
         }
+        let mut tb_printed = String::new();
 
         let mut linectr = self.top;
         while linectr < self.top + height - bottom_pad && linectr < self.contents.len() {
@@ -245,26 +246,28 @@ impl Buffer {
                     let id = self.indent_lvl * 4;
                     match i {
                         a if a == self.cursor_pos.idx => {
-                            print!("\x1b[47m\x1b[30m{content}\x1b[0m");
+                            tb_printed
+                                .push_str(format!("\x1b[47m\x1b[30m{content}\x1b[0m").as_str());
                         }
                         b if b == id => {
                             if content == ' ' {
-                                print!("\x1b[33m\x1b[2m|\x1b[0m");
+                                tb_printed.push_str("\x1b[33m\x1b[2m|\x1b[0m");
                             } else {
-                                print!("\x1b[33m{content}\x1b[0m");
+                                tb_printed.push_str(format!("\x1b[33m{content}\x1b[0m").as_str());
                             }
                         }
                         _ => {
-                            print!("{content}");
+                            tb_printed.push_str(format!("{content}").as_str());
                         }
                     }
                     i += 1;
                 }
-                println!();
+                tb_printed.push('\n');
             } else if self.contents[linectr].len() > width {
-                println!("{}", &self.contents[linectr][0..width]);
+                tb_printed.push_str(&self.contents[linectr][0..width]);
+                tb_printed.push('\n');
             } else {
-                println!("{: <width$}", self.contents[linectr]);
+                tb_printed.push_str(format!("{: <width$}", self.contents[linectr]).as_str());
             }
             linectr += 1;
         }
@@ -288,18 +291,22 @@ impl Buffer {
             pretty_str_event(&event),
         );
         bottom_bar.truncate(width);
-        println!("{: <width$}", bottom_bar,);
-        print!(
-            "{: <width$}",
+        tb_printed.push_str(format!("{: <width$}", bottom_bar).as_str());
+        tb_printed.push_str(
             format!(
-                "{}{}",
-                self.mode,
-                if self.mode.show_temp() {
-                    format!(": {}", self.temp_str)
-                } else {
-                    "".to_string()
-                }
+                "{: <width$}",
+                format!(
+                    "{}{}",
+                    self.mode,
+                    if self.mode.show_temp() {
+                        format!(": {}", self.temp_str)
+                    } else {
+                        "".to_string()
+                    }
+                )
             )
-        )
+            .as_str(),
+        );
+        print!("{}", tb_printed);
     }
 }
