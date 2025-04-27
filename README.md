@@ -62,7 +62,7 @@ M-g -> Consumes one letter to the left, and tries to go to the cursor position
   stored in the marklist. If the mark has not been set previously, it does
   nothing.
   Note that this sets the mark '_' to the cursor position so you can jump back.
-M-x -> Enters switch mode, where typing writes to the temp_str buffer.
+`M-x` -> Enters switch mode, where typing writes to the temp_str buffer.
   Upon pressing enter, the temp_str buffer's content is interpreted as a mode,
   and you will be switched to that mode. If the contents are not interpreted as
   any mode, Default mode will be used.
@@ -83,22 +83,22 @@ C-Backspace -> Deletes word backwards (this effectively deletes whitespace
 
 ### Default mode
 
-Aliases in M-x: any, as long as they aren't aliases of other modes.
+Aliases in `M-x`: any, as long as they aren't aliases of other modes.
 Shown in bottom bar as "default".
 
 This is the default editing mode.
 
 ### Paste mode
 
-Aliases in M-x: "paste", "p"
+Aliases in `M-x`: "paste", "p"
 Shown in bottom bar as "paste".
 
-This is used in pasting. It is toggled by doing M-x p <enter>.
+This is used in pasting. It is toggled by doing `M-x` p <enter>.
 In this mode, autopairs are disabled.
 
 ### Replace mode
 
-Aliases in M-x: "replace", "r"
+Aliases in `M-x`: "replace", "r"
 Shown in bottom bar as "replace".
 
 Essentially like R in vim. Overwrites instead of inserting.
@@ -106,25 +106,25 @@ Exit with <esc>.
 
 ### Find mode
 
-Aliases in M-x: "find", "f"
+Aliases in `M-x`: "find", "f"
 Shown in bottom bar as "find".
 
-Same as M-/. Using M-x to enter Find mode is discouraged.
+Same as `M-/`. Using `M-x` to enter Find mode is discouraged.
 All typed characters are appended to find_str.
 Backspace pops a character from find_str.
 
 ### ReplaceStr mode
 
-Aliases in M-x: "replacestr", "rs"
+Aliases in `M-x`: "replacestr", "rs"
 Shown in bottom bar as "replace str".
 
-Same as M-r. Using M-x to enter ReplaceStr mode is discouraged.
+Same as `M-r`. Using `M-x` to enter ReplaceStr mode is discouraged.
 All typed characters are appended to replace_str.
 Backspace pops a character from replace_str.
 
 ### Goto mode
 
-Aliases in M-x: "goto", "g"
+Aliases in `M-x`: "goto", "g"
 Shown in bottom bar as "goto: ".
 
 The contents of the buffer will be interpreted as a line number and the cursor
@@ -135,7 +135,7 @@ will be put on the bottom line.
 
 ### OpenFile mode
 
-Aliasses in M-x: "open", "o", "openfile"
+Aliasses in `M-x`: "open", "o", "openfile"
 Shown in bottom bar as "open file: ".
 
 The contents of the buffer will be interpreted as a filepath for the program to
@@ -144,10 +144,9 @@ If the filepath is illegal, the program will crash.
 
 ### Switch mode
 
-Aliases in M-x: "switch", "s"
+Aliases in `M-x`: "switch", "s"
 Shown in bottom bar as "switch to mode: ".
 
 Exit by pressing <enter> or <esc>.
 Mode for finding modes.
 Writes directly to temp_str.
-
