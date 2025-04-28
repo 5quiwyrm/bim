@@ -1,6 +1,8 @@
 mod buffer;
 use buffer::*;
 
+mod languages;
+
 use crossterm::{
     event::{self, Event, KeyCode, KeyModifiers},
     terminal,
