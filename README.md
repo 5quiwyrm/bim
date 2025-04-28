@@ -6,6 +6,9 @@ Also Bim sounds like bin, and this reflects the shittiness of this editor.
 This will be a keyboard focused editor, but it will not be much like Vim.
 This will have modes that change what keybinds do.
 
+This editor was initially built in Notepad, but once it achieved a usable
+state it started to be built in itself!
+
 ## Usage
 
 To run the project:
