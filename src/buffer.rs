@@ -292,15 +292,14 @@ impl Buffer {
                     let id = self.indent_lvl * 4;
                     match i {
                         a if a == self.cursor_pos.idx => {
-                            tb_printed.push_str(
-                                format!("\x1b[1m\x1b[4m{content}\x1b[22m\x1b[24m").as_str(),
-                            );
+                            tb_printed
+                                .push_str(format!("\x1b[47m\x1b[30m{content}\x1b[0m").as_str());
                         }
                         b if b == id => {
                             if content.ch == ' ' {
-                                tb_printed.push_str("\x1b[2m|\x1b[22m");
+                                tb_printed.push_str("\x1b[33m|\x1b[0m");
                             } else {
-                                tb_printed.push_str(format!("\x1b[2m{content}\x1b[22m").as_str());
+                                tb_printed.push_str(format!("\x1b[33m{content}\x1b[0m").as_str());
                             }
                         }
                         _ => {
@@ -320,13 +319,13 @@ impl Buffer {
                 let mut i = 0;
                 let mut linechs = content[linectr].iter();
                 while i < truewidth {
-let empty = languages::StyledChar {
+                    let empty = languages::StyledChar {
                         style: String::new(),
                         ch: ' ',
                     };
-		    tb_printed.push_str(format!("{}", linechs.next().unwrap_or(&empty)).as_str());
-i += 1;
-		}
+                    tb_printed.push_str(format!("{}", linechs.next().unwrap_or(&empty)).as_str());
+                    i += 1;
+                }
                 tb_printed.push('\n');
             }
             linectr += 1;

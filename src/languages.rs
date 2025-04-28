@@ -39,7 +39,7 @@ impl StyledChar {
         }
     }
 
-    pub fn from_string(s: &String) -> Vec<StyledChar> {
+    pub fn from_string(s: &str) -> Vec<StyledChar> {
         let mut ret_vec: Vec<StyledChar> = vec![];
         for ch in s.chars() {
             ret_vec.push(StyledChar::from_char(ch));
@@ -56,23 +56,82 @@ impl Language for Rust {
 
     fn highlight(&self, buffer: Vec<String>) -> Vec<Vec<StyledChar>> {
         let mut ret_buf: Vec<Vec<StyledChar>> = vec![];
+        let mut multiline_commented = false;
+        let mut multiline_comment_ending = 0;
+        let mut escaping = false;
+        let mut quoted = false;
+        let mut quote_ending = false;
+        let mut charquoted = 0;
+        let mut errorsize = 0;
         for line in buffer {
             let mut push_buf: Vec<StyledChar> = vec![];
-            let mut line_chars = line.chars().peekable();
+            let line_chars: Vec<char> = line.chars().collect();
             let mut commented = false;
-            while let Some(ch) = line_chars.next() {
+            let mut idx = 0;
+            while let Some(&ch) = line_chars.get(idx) {
+                if ch == '*' && line_chars.get(idx + 1) == Some(&'/') {
+                    multiline_commented = false;
+                    multiline_comment_ending = 2;
+                }
+                if ch == '/' {
+                    match line_chars.get(idx + 1) {
+                        Some(&'/') => {
+                            commented = true;
+                        }
+                        Some(&'*') => {
+                            multiline_commented = true;
+                        }
+                        _ => {}
+                    }
+                }
+                if ch == '\"'
+                    && !escaping
+                    && !(multiline_commented || commented || multiline_comment_ending != 0)
+                {
+                    if quoted {
+                        quote_ending = true;
+                    }
+                    quoted = !quoted;
+                }
+                if ch == '\''
+                    && !escaping
+                    && charquoted == 0
+                    && !(quoted
+                        || multiline_commented
+                        || commented
+                        || multiline_comment_ending != 0)
+                {
+                    if line_chars.get(idx + 2) == Some(&'\'') && line_chars.get(idx + 1) != Some(&'\\') {
+                        charquoted = 3;
+                    } else if line_chars.get(idx + 3) == Some(&'\'') {
+                        charquoted = 4;
+                    }
+                }
+                escaping = ch == '\\';
                 push_buf.push(StyledChar {
-                    style: (if commented {
+                    style: (if errorsize != 0 {
+                        errorsize -= 1;
+                        "\x1b[41m\x1b[30m"
+                    } else if multiline_commented || commented {
+                        "\x1b[2m"
+                    } else if multiline_comment_ending != 0 {
+                        multiline_comment_ending -= 1;
+                        "\x1b[2m"
+                    } else if quoted {
                         "\x1b[32m"
-                    } else if ch == '/' && line_chars.peek() == Some(&'/') {
-                        commented = true;
+                    } else if quote_ending {
+                        quote_ending = false;
                         "\x1b[32m"
+                    } else if charquoted != 0 {
+                        charquoted -= 1;
+                        "\x1b[36m"
                     } else {
                         ""
                     })
                     .to_string(),
                     ch,
-                })
+                });
+                idx += 1;
             }
             ret_buf.push(push_buf);
         }
