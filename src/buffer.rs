@@ -98,6 +98,7 @@ pub struct Buffer {
     pub temp_str: String,
     pub marklist: HashMap<char, Cursor>,
     pub indent_lvl: usize,
+    pub lang: Box<dyn languages::Language>,
     pub mode: Mode,
 }
 
@@ -119,13 +120,14 @@ impl Buffer {
             contents,
             top: 0,
             cursor_pos: Cursor { line: 0, idx: 0 },
-            filepath,
+            filepath: filepath.clone(),
             lastact: Action::None,
             find_str: String::new(),
             replace_str: String::new(),
             temp_str: String::new(),
             marklist: HashMap::new(),
             indent_lvl: 0,
+            lang: languages::get_lang(&filepath),
             mode: Mode::Default,
         }
     }
@@ -229,12 +231,12 @@ impl Buffer {
 
     pub fn newline_below(&mut self, linect: String) {
         let mut newline = String::new();
-        for _ in 0..(self.indent_lvl * 4) {
+        for _ in 0..(self.indent_lvl * self.lang.indent_size()) {
             newline.push(' ');
         }
         newline.push_str(&linect);
         self.cursor_pos.line += 1;
-        self.cursor_pos.idx = self.indent_lvl * 4;
+        self.cursor_pos.idx = self.indent_lvl * self.lang.indent_size();
         self.contents.insert(self.cursor_pos.line, newline);
     }
 
@@ -247,6 +249,7 @@ impl Buffer {
         self.cursor_pos.idx = 0;
         self.cursor_pos.line = 0;
         self.save();
+        self.lang = languages::get_lang(&self.filepath);
     }
 
     pub fn print(&mut self, event: event::Event) {
@@ -263,8 +266,8 @@ impl Buffer {
         }
         let mut tb_printed = String::new();
 
-        let lang = languages::get_lang(&self.filepath);
-        let content = lang.highlight(self.contents.clone());
+        let lang = &self.lang;
+        let content = lang.highlight(&self.contents);
         let indent_size = lang.indent_size();
         let spaces = 2;
         let mut sidesize = spaces;
@@ -289,7 +292,7 @@ impl Buffer {
                         ch: ' ',
                     };
                     let content = line_content.next().unwrap_or(&empty);
-                    let id = self.indent_lvl * 4;
+                    let id = self.indent_lvl * indent_size;
                     match i {
                         a if a == self.cursor_pos.idx => {
                             tb_printed

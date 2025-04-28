@@ -31,7 +31,7 @@ Char(c) -> Type the character c, with autopairs supported. If in a prompt that
 Left | Down | Up | Right -> Does exactly what they are meant to do.
 Home -> Move to start of line.
 End -> Move to end of line.
-Tab -> Types 4 spaces, increasing indent lvl by 1
+Tab -> Types n spaces, increasing indent lvl by 1
 
 M-q -> Quit bim.
 M-s -> Saves file.

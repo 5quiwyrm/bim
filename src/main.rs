@@ -83,7 +83,7 @@ fn main() {
     _ = terminal::enable_raw_mode();
     buf.save();
     'ed: loop {
-        if event::poll(Duration::from_millis(100)).unwrap() {
+        if event::poll(Duration::from_millis(50)).unwrap() {
             let (widthu, heightu) = terminal::size().unwrap();
             let _width = widthu as usize;
             let height = heightu as usize;
@@ -236,9 +236,9 @@ fn main() {
                                 }
                             }
                             KeyCode::Tab => {
-                                buf.contents[buf.cursor_pos.line]
-                                    .insert_str(buf.cursor_pos.idx, "    ");
-                                buf.cursor_pos.idx += 4;
+                                (0..buf.lang.indent_size()).for_each(|_| buf.contents[buf.cursor_pos.line]
+                                    .insert(buf.cursor_pos.idx, ' '));
+                                buf.cursor_pos.idx += buf.lang.indent_size();
                                 buf.indent_lvl += 1;
                             }
                             _ => {}
@@ -311,7 +311,7 @@ fn main() {
                                 while currline.next() == Some(' ') {
                                     spaces += 1;
                                 }
-                                buf.indent_lvl = spaces / 4;
+                                buf.indent_lvl = spaces / buf.lang.indent_size();
                                 buf.cursor_pos.idx = spaces;
                             }
                             KeyCode::Char(':') => {
