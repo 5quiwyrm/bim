@@ -51,6 +51,7 @@ M-, -> Decreases indent lvl by 1 (given that indent lvl > 0).
 M-. -> Increases indent lvl by 1.
 M-; -> Moves to the first non-whitespace character, detecting the indent level
   as it scans across the row.
+M-: -> Auto-set indent level.
 M-/ -> Quick switch to Find mode, clears the find buffer. In find mode, typed
   characters are typed into the find_str buffer, which is used in finding.
 M-n -> Finds next string matching find_str. Note that this is case-sensitive.
@@ -77,6 +78,8 @@ M-h -> Where n is the length of the contents of find_str, this command replaces
   the n preceding character to the cursor with the contents of replace_str.
   Newlines halt this backwards seeking.
 M-j -> Joins the current line with the line below, separated by a space.
+M-k -> Kill until indent level.
+M-K -> Kill until end of line (forwards).
 
 C-r -> Reloads the file.
 C-Backspace -> Deletes word backwards (this effectively deletes whitespace

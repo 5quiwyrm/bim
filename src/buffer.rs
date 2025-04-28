@@ -104,7 +104,11 @@ impl Buffer {
     pub fn new(filepath: String) -> Self {
         let contents: Vec<String> = fs::read_to_string(&filepath)
             .unwrap_or({
-                fs::File::create(&filepath).unwrap();
+                if filepath != *"scratch" {
+                    _ = fs::File::create(&filepath).map_err(|_| {
+                        println!("Illegal filepath, proceeding to scratch buffer...");
+                    });
+                }
                 "\n".to_string()
             })
             .lines()
@@ -185,9 +189,11 @@ impl Buffer {
 
     #[inline]
     pub fn save(&mut self) {
-        let trimmedlines: Vec<&str> = self.contents.iter().map(|s| s.trim_end()).collect();
-        fs::write(self.filepath.clone(), trimmedlines.join("\n")).unwrap();
-        self.lastact = Action::Save;
+        if self.filepath != *"scratch" {
+            let trimmedlines: Vec<&str> = self.contents.iter().map(|s| s.trim_end()).collect();
+            fs::write(self.filepath.clone(), trimmedlines.join("\n")).unwrap();
+            self.lastact = Action::Save;
+        }
     }
 
     pub fn backspace(&mut self) -> Option<char> {

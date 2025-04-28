@@ -75,7 +75,7 @@ fn main() {
     let mut stdout = io::stdout();
     let mut args = args();
     _ = args.next();
-    let path = args.next().unwrap_or("./src/main.rs".to_string());
+    let path = args.next().unwrap_or("scratch".to_string());
     let mut buf = Buffer::new(path);
     print!("\x1bc");
     _ = terminal::enable_raw_mode();
