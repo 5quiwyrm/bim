@@ -312,6 +312,14 @@ fn main() {
                                 buf.indent_lvl = spaces / 4;
                                 buf.cursor_pos.idx = spaces;
                             }
+                            KeyCode::Char(':') => {
+                                let mut currline = buf.contents[buf.cursor_pos.line].chars();
+                                let mut spaces = 0;
+                                while currline.next() == Some(' ') {
+                                    spaces += 1;
+                                }
+                                buf.indent_lvl = spaces / 4;
+                            }
                             KeyCode::Char('/') => {
                                 if buf.mode == Mode::Find {
                                     buf.mode = Mode::Default;
@@ -429,7 +437,17 @@ fn main() {
                                     buf.contents[buf.cursor_pos.line].push_str(l.trim());
                                 }
                             }
-
+                            KeyCode::Char('0') => {
+                                buf.indent_lvl = 0;
+                            }
+                            KeyCode::Char('k') => {
+                                buf.contents[buf.cursor_pos.line]
+                                    .replace_range((buf.indent_lvl * 4)..buf.cursor_pos.idx, "");
+                                buf.cursor_pos.idx = buf.indent_lvl * 4;
+                            }
+                            KeyCode::Char('K') => {
+                                buf.contents[buf.cursor_pos.line].truncate(buf.cursor_pos.idx);
+                            }
                             _ => {}
                         },
                         Mods::Ctrl => match key.code {
