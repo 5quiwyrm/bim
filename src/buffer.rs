@@ -1,7 +1,11 @@
+//! Buffer and cursor handling module.
+
+
 use crate::languages;
 use crossterm::{event, terminal};
 use std::{collections::HashMap, fmt::{self, Write}, fs};
 
+/// Prettifies events to string for printing.
 fn pretty_str_event(event: &event::Event) -> String {
     if let event::Event::Key(key) = event {
         if key.modifiers == event::KeyModifiers::NONE {
@@ -14,15 +18,21 @@ fn pretty_str_event(event: &event::Event) -> String {
     }
 }
 
+/// Structure for storing cursor position.
 #[derive(Copy, Clone)]
 pub struct Cursor {
+    /// Line number (subtracted by 1).
     pub line: usize,
+    /// Index in line (subtracted by 1);
     pub idx: usize,
 }
 
+/// Structure for actions. Will be modified in the future.
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Action {
+    /// Default state.
     None,
+    /// Successfully saved file.
     Save,
 }
 
@@ -35,19 +45,30 @@ impl fmt::Display for Action {
     }
 }
 
+/// Enum for the mode of the program. Directly affects the behaviour of the program.
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Mode {
+    /// Default mode.
     Default,
+    /// Paste mode.
     Paste,
+    /// Replacement mode.
     Replace,
+    /// Find mode.
     Find,
+    /// Replace string mode.
     ReplaceStr,
+    /// Goto mode.
     Goto,
+    /// Openfile mode.
     OpenFile,
+    /// Mode switching mode.
     Switch,
 }
 
 impl Mode {
+    /// Primarily used for switching modes.
+    /// To add more aliases for modes, the match statement below should be changed.
     pub fn from_str(s: &str) -> Mode {
         match s.trim() {
             "paste" | "p" => Mode::Paste,
@@ -78,6 +99,7 @@ impl fmt::Display for Mode {
 }
 
 impl Mode {
+    /// Determines whether the temp_str buffer should be shown.
     pub fn show_temp(self) -> bool {
         use Mode::*;
         match self {
@@ -87,23 +109,38 @@ impl Mode {
     }
 }
 
+/// Structure for storing the current displayed buffer.
 pub struct Buffer {
+    /// Contents of the file, as lines. This is what is modified.
     pub contents: Vec<String>,
+    /// Syntax highlighted contents. This is what is shown.
     pub highlighted_contents: Vec<Vec<languages::StyledChar>>,
+    /// Position of the cursor.
     pub cursor_pos: Cursor,
+    /// Line number of the top line shown.
     pub top: usize,
+    /// Filepath of the file currently being edited.
     pub filepath: String,
+    /// Last action taken.
     pub lastact: Action,
+    /// String to be found when using `M-n` and `M-p`.
     pub find_str: String,
+    /// String to replace by when using `M-h`.
     pub replace_str: String,
+    /// Temporary buffer for all purposes.
     pub temp_str: String,
+    /// Hashmap containing the locations of marks.
     pub marklist: HashMap<char, Cursor>,
+    /// Current indent level. This is language agnostic.
     pub indent_lvl: usize,
+    /// Current language. Used for determining indent size and highlighting.
     pub lang: Box<dyn languages::Language>,
+    /// Current mode.
     pub mode: Mode,
 }
 
 impl Buffer {
+    /// Constructs a new instance of `Buffer` from a filepath.
     pub fn new(filepath: &str) -> Self {
         let contents: Vec<String> = fs::read_to_string(filepath)
             .unwrap_or({
@@ -135,11 +172,14 @@ impl Buffer {
         }
     }
 
+    /// Updates highlighting. Performance cost varies. Call as infrequently as possible.
     #[inline]
     pub fn update_highlighting(&mut self) {
         self.highlighted_contents = self.lang.highlight(&self.contents);
     }
 
+    /// Moves the cursor left, wrapping around lines.
+    /// Return value signifies whether the cursor actually moved.
     #[inline]
     pub fn move_left(&mut self) -> bool {
         if self.cursor_pos.idx == 0 {
@@ -155,6 +195,8 @@ impl Buffer {
         true
     }
 
+    /// Moves the cursor right, wrapping around lines.
+    /// Return value signifies whether the cursor actually moved.
     #[inline]
     pub fn move_right(&mut self) -> bool {
         if self.cursor_pos.idx == self.contents[self.cursor_pos.line].len()
@@ -172,6 +214,8 @@ impl Buffer {
         true
     }
 
+    /// Moves the cursor up, moving to the end of a line if the index is larger than the length of the line.
+    /// Return value signifies whether the cursor actually moved.
     #[inline]
     pub fn move_up(&mut self) -> bool {
         if self.cursor_pos.line != 0 {
@@ -185,6 +229,8 @@ impl Buffer {
         }
     }
 
+    /// Moves the cursor down, moving to the end of a line if the index is larger than the length of a line.
+    /// Return value signfies whether the cursor actually moved.
     #[inline]
     pub fn move_down(&mut self) -> bool {
         if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {

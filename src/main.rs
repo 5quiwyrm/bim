@@ -1,7 +1,7 @@
-mod buffer;
+pub mod buffer;
 use buffer::*;
 
-mod languages;
+pub mod languages;
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyModifiers},
@@ -14,6 +14,7 @@ use std::{
     time::Duration,
 };
 
+/// Returns matching brace for given open brace.
 #[must_use]
 pub fn get_matching_brace(ch: char) -> char {
     match ch {
@@ -24,6 +25,19 @@ pub fn get_matching_brace(ch: char) -> char {
     }
 }
 
+/** Generates match statement to support autopairs.
+The macro takes the form of:
+```
+autopair!(
+   buffer,
+   character,
+   open, close;
+   open, close;
+   ...
+)
+```
+Note that you should not put a semicolon after the last pair. */
+#[macro_export]
 macro_rules! autopair {
     ($buffer: ident, $char: expr, $($open: expr, $close: expr);*) => {
         match $char { $(
@@ -54,14 +68,20 @@ macro_rules! autopair {
     }
 }
 
+/// Modifiers. Ignores shiftedness.
 pub enum Mods {
+    /// No modifiers.
     None,
+    /// Control
     Ctrl,
+    /// Alt
     Alt,
+    /// Control + Alt
     CtrlAlt,
 }
 
 impl Mods {
+    /// Parses modifier data from crossterm to `Mods`.
     fn to_mods(has_alt: bool, has_ctrl: bool) -> Mods {
         if has_alt {
             if has_ctrl { Mods::CtrlAlt } else { Mods::Alt }
@@ -73,7 +93,7 @@ impl Mods {
     }
 }
 
-fn main() {
+pub fn main() {
     let mut stdout = io::stdout();
     let mut args = args();
     _ = args.next();
@@ -240,6 +260,7 @@ fn main() {
                                     .insert(buf.cursor_pos.idx, ' '));
                                 buf.cursor_pos.idx += buf.lang.indent_size();
                                 buf.indent_lvl += 1;
+                                buf.update_highlighting();
                             }
                             _ => {}
                         },

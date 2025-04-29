@@ -1,3 +1,5 @@
+//! Default text support.
+
 use crate::languages::{
     StyledChar,
     Language,

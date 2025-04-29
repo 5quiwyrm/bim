@@ -1,3 +1,5 @@
+//! Markdown syntax highlighting support.
+
 use crate::languages::{
     StyledChar,
     Language,

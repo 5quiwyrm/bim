@@ -1,3 +1,5 @@
+//! Rust syntax highlighting support.
+
 use crate::languages::{
     StyledChar,
     Language,
