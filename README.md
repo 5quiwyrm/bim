@@ -103,7 +103,7 @@ Aliases in `M-x`: "paste", "p"
 
 Shown in bottom bar as "paste".
 
-This is used in pasting. It is toggled by doing `M-x` p <enter>.
+This is used in pasting. It is toggled by doing `M-x` p enter.
 In this mode, autopairs are disabled.
 
 ### Replace mode
@@ -113,7 +113,7 @@ Aliases in `M-x`: "replace", "r"
 Shown in bottom bar as "replace".
 
 Essentially like R in vim. Overwrites instead of inserting.
-Exit with <esc>.
+Exit with escape.
 
 ### Find mode
 
@@ -163,7 +163,7 @@ Aliases in `M-x`: "switch", "s"
 
 Shown in bottom bar as "switch to mode: ".
 
-Exit by pressing <enter> or <esc>.
+Exit by pressing enter or escape.
 Mode for finding modes.
 Writes directly to temp_str.
 
