@@ -68,7 +68,7 @@ M-g -> Consumes one letter to the left, and tries to go to the cursor position
   stored in the marklist. If the mark has not been set previously, it does
   nothing.
   Note that this sets the mark '_' to the cursor position so you can jump back.
-`M-x` -> Enters switch mode, where typing writes to the temp_str buffer.
+M-x -> Enters switch mode, where typing writes to the temp_str buffer.
   Upon pressing enter, the temp_str buffer's content is interpreted as a mode,
   and you will be switched to that mode. If the contents are not interpreted as
   any mode, Default mode will be used.

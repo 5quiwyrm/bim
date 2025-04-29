@@ -34,6 +34,8 @@ impl StyledChar {
     }
 }
 
+// Add language modules
+
 pub mod rust;
 use rust::*;
 
@@ -42,6 +44,8 @@ use text::*;
 
 pub mod markdown;
 use markdown::*;
+
+// Update get_lang if you added a new language
 
 pub fn get_lang(path: &str) -> Box<dyn Language> {
     if RUST.is_kind(path) {

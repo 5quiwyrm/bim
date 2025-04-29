@@ -1,6 +1,6 @@
 use crate::languages;
 use crossterm::{event, terminal};
-use std::{collections::HashMap, fmt, fs};
+use std::{collections::HashMap, fmt::{self, Write}, fs};
 
 fn pretty_str_event(event: &event::Event) -> String {
     if let event::Event::Key(key) = event {
@@ -78,7 +78,7 @@ impl fmt::Display for Mode {
 }
 
 impl Mode {
-    pub fn show_temp(&self) -> bool {
+    pub fn show_temp(self) -> bool {
         use Mode::*;
         match self {
             Default | Paste | Replace | Find | ReplaceStr => false,
@@ -89,6 +89,7 @@ impl Mode {
 
 pub struct Buffer {
     pub contents: Vec<String>,
+    pub highlighted_contents: Vec<Vec<languages::StyledChar>>,
     pub cursor_pos: Cursor,
     pub top: usize,
     pub filepath: String,
@@ -103,11 +104,11 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub fn new(filepath: String) -> Self {
-        let contents: Vec<String> = fs::read_to_string(&filepath)
+    pub fn new(filepath: &str) -> Self {
+        let contents: Vec<String> = fs::read_to_string(filepath)
             .unwrap_or({
-                if filepath != *"scratch" {
-                    _ = fs::File::create(&filepath).map_err(|_| {
+                if filepath != "scratch" {
+                    _ = fs::File::create(filepath).map_err(|_| {
                         println!("Illegal filepath, proceeding to scratch buffer...");
                     });
                 }
@@ -116,20 +117,27 @@ impl Buffer {
             .lines()
             .map(|s| s.to_string())
             .collect();
+        let lang = languages::get_lang(filepath);
         Buffer {
-            contents,
+            contents: contents.clone(),
+            highlighted_contents: lang.highlight(&contents),
             top: 0,
             cursor_pos: Cursor { line: 0, idx: 0 },
-            filepath: filepath.clone(),
+            filepath: filepath.to_string(),
             lastact: Action::None,
             find_str: String::new(),
             replace_str: String::new(),
             temp_str: String::new(),
             marklist: HashMap::new(),
             indent_lvl: 0,
-            lang: languages::get_lang(&filepath),
+            lang: languages::get_lang(filepath),
             mode: Mode::Default,
         }
+    }
+
+    #[inline]
+    pub fn update_highlighting(&mut self) {
+        self.highlighted_contents = self.lang.highlight(&self.contents);
     }
 
     #[inline]
@@ -211,15 +219,20 @@ impl Buffer {
                 self.contents.remove(self.cursor_pos.line);
                 self.cursor_pos.line -= 1;
                 self.cursor_pos.idx = oldlen;
+                self.update_highlighting();
                 Some('\n')
             } else if !self.contents[0].is_empty() {
-                return Some(self.contents[0].remove(0));
+                let ret = Some(self.contents[0].remove(0));
+                self.update_highlighting();
+                ret
             } else {
                 return None;
             }
         } else {
             self.cursor_pos.idx -= 1;
-            Some(self.contents[self.cursor_pos.line].remove(t - 1))
+            let ret = Some(self.contents[self.cursor_pos.line].remove(t - 1));
+            self.update_highlighting();
+            ret
         }
     }
 
@@ -227,17 +240,19 @@ impl Buffer {
     pub fn type_char(&mut self, ch: char) {
         self.contents[self.cursor_pos.line].insert(self.cursor_pos.idx, ch);
         self.cursor_pos.idx += 1;
+        self.update_highlighting();
     }
 
-    pub fn newline_below(&mut self, linect: String) {
+    pub fn newline_below(&mut self, linect: &str) {
         let mut newline = String::new();
         for _ in 0..(self.indent_lvl * self.lang.indent_size()) {
             newline.push(' ');
         }
-        newline.push_str(&linect);
+        newline.push_str(linect);
         self.cursor_pos.line += 1;
         self.cursor_pos.idx = self.indent_lvl * self.lang.indent_size();
         self.contents.insert(self.cursor_pos.line, newline);
+        self.update_highlighting();
     }
 
     pub fn reload_file(&mut self) {
@@ -250,9 +265,10 @@ impl Buffer {
         self.cursor_pos.line = 0;
         self.save();
         self.lang = languages::get_lang(&self.filepath);
+        self.update_highlighting();
     }
 
-    pub fn print(&mut self, event: event::Event) {
+    pub fn print(&mut self, event: &event::Event) {
         print!("\x1b[J\x1b[H");
         let (widthu, heightu) = terminal::size().unwrap();
         let width = widthu as usize;
@@ -266,9 +282,8 @@ impl Buffer {
         }
         let mut tb_printed = String::new();
 
-        let lang = &self.lang;
-        let content = lang.highlight(&self.contents);
-        let indent_size = lang.indent_size();
+        let content = &self.highlighted_contents;
+        let indent_size = self.lang.indent_size();
         let spaces = 2;
         let mut sidesize = spaces;
         let mut lenfile = content.len() + 1;
@@ -316,7 +331,7 @@ impl Buffer {
                 content[linectr]
                     .iter()
                     .take(truewidth)
-                    .for_each(|c| tb_printed.push_str(&format!("{c}")));
+                    .for_each(|c|{ write!(&mut tb_printed, "{c}");});
                 tb_printed.push('\n');
             } else {
                 let mut i = 0;
@@ -350,7 +365,7 @@ impl Buffer {
                 format!("(-> {:?}) ", self.replace_str)
             },
             self.lastact,
-            pretty_str_event(&event),
+            pretty_str_event(event),
         );
         bottom_bar = format!("{bottom_bar: <width$}");
         tb_printed.push_str(format!("{bottom_bar: <width$}").as_str());

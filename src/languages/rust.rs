@@ -93,7 +93,7 @@ impl Language for Rust {
                 });
                 idx += 1;
             }
-            ret_buf.push(push_buf)
+            ret_buf.push(push_buf);
         }
         ret_buf
     }
