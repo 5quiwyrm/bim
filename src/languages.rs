@@ -63,6 +63,7 @@ impl Language for Rust {
         let mut quoted = false;
         let mut quote_ending = false;
         let mut charquoted = 0;
+        let mut isnum = false;
         let mut errorsize = 0;
         for line in buffer {
             let mut push_buf: Vec<StyledChar> = vec![];
@@ -73,8 +74,7 @@ impl Language for Rust {
                 if ch == '*' && line_chars.get(idx + 1) == Some(&'/') {
                     multiline_commented = false;
                     multiline_comment_ending = 2;
-                }
-                if ch == '/' {
+                } else if ch == '/' {
                     match line_chars.get(idx + 1) {
                         Some(&'/') => {
                             commented = true;
@@ -84,8 +84,7 @@ impl Language for Rust {
                         }
                         _ => {}
                     }
-                }
-                if ch == '\"'
+                } else if ch == '\"'
                     && !escaping
                     && !multiline_commented
                     && !commented
@@ -95,8 +94,7 @@ impl Language for Rust {
                         quote_ending = true;
                     }
                     quoted = !quoted;
-                }
-                if ch == '\''
+                } else if ch == '\''
                     && !escaping
                     && charquoted == 0
                     && !quoted
@@ -111,75 +109,16 @@ impl Language for Rust {
                     } else if line_chars.get(idx + 3) == Some(&'\'') {
                         charquoted = 4;
                     }
+                } else if ch.is_numeric()
+                    && !escaping
+                    && !multiline_commented
+                    && !commented
+                    && multiline_comment_ending == 0
+                    && !quoted
+                    && charquoted == 0
+                {
+                    isnum = true;
                 }
-                /*
-                                if !(quoted
-                                    || multiline_commented
-                                    || commented
-                                    || multiline_comment_ending != 0) {
-                                    // if
-                                    if ch == 'i'
-                                        && line_chars.get(idx + 1) == Some(&'f')
-                                        && line_chars
-                                                .get(idx + 2)
-                                                .unwrap_or(&'a')
-                                                .is_whitespace() {
-                                        keywordsize = 2;
-                                    // else
-                                    } else if ch == 'e'
-                                        && line_chars.get(idx + 1) == Some(&'l')
-                                        && line_chars.get(idx + 2) == Some(&'s')
-                                        && line_chars.get(idx + 3) == Some(&'e')
-                                        && !line_chars
-                                            .get(idx + 4)
-                                            .unwrap_or(&'a')
-                                            .is_whitespace() {
-                                        keywordsize = 4;
-                                    // as
-                                    } else if ch == 'a'
-                                        && line_chars.get(idx + 1) == Some(&'s')
-                                        && !line_chars
-                                            .get(idx + 4)
-                                            .unwrap_or(&'a')
-                                            .is_whitespace() {
-                                        keywordsize = 2;
-                                    // break
-                                    }
-                                    // const
-                                    // continue
-                                    // crate
-                                    // enum
-                                    // extern
-                                    // false
-                                    // fn
-                                    // for
-                                    // impl
-                                    // in
-                                    // let
-                                    // loop
-                                    // match
-                                    // mod
-                                    // move
-                                    // mut
-                                    // pub
-                                    // ref
-                                    // return
-                                    // self
-                                    // Self
-                                    // static
-                                    // struct
-                                    // super
-                                    // trait
-                                    // type
-                                    // unsafe
-                                    // use
-                                    // where
-                                    // while
-                                    // async
-                                    // await
-                                    // dyn
-                                }
-                */
                 escaping = ch == '\\';
                 push_buf.push(StyledChar {
                     style: (if errorsize != 0 {
@@ -198,9 +137,9 @@ impl Language for Rust {
                     } else if charquoted != 0 {
                         charquoted -= 1;
                         "\x1b[36m"
-//                    } else if keywordsize != 0 {
-//                        keywordsize -= 1;
-//                        "\x1b[1;34m"
+                    } else if isnum {
+                        isnum = false;
+                        "\x1b[1;34m"
                     } else {
                         ""
                     })
@@ -219,9 +158,59 @@ impl Language for Rust {
     }
 }
 
+pub struct Markdown {}
+pub const MARKDOWN: Markdown = Markdown {};
+impl Language for Markdown {
+    fn is_kind(&self, filepath: &str) -> bool {
+        filepath.ends_with(".md")
+    }
+
+    fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
+        let mut ret_buf: Vec<Vec<StyledChar>> = vec![];
+        let mut header_lvl;
+        for line in buffer {
+            header_lvl = 0;
+            let mut push_buf: Vec<StyledChar> = vec![];
+            let mut line_chars = line.chars().peekable();
+            while line_chars.peek() == Some(&'#') {
+                header_lvl += 1;
+                let pound = StyledChar {
+                    style: String::new(),
+                    ch: '#',
+                };
+                push_buf.push(pound);
+                _ = line_chars.next();
+            }
+            let style = (match header_lvl {
+                1 => "\x1b[1;34m",
+                2 => "\x1b[35m",
+                3 => "\x1b[32m",
+                4 => "\x1b[33m",
+                5 => "\x1b[31m",
+                6 => "\x1b[36m",
+                _ => "",
+            }).to_string();
+            for ch in line_chars {
+                let c = StyledChar {
+                    style: style.clone(),
+                    ch,
+                };
+                push_buf.push(c);
+            }
+            ret_buf.push(push_buf);
+        }
+        ret_buf
+    }
+    fn indent_size(&self) -> usize {
+        4
+    }
+}
+
 pub fn get_lang(path: &str) -> Box<dyn Language> {
     if RUST.is_kind(path) {
         Box::new(RUST)
+    } else if MARKDOWN.is_kind(path) {
+        Box::new(MARKDOWN)
     } else {
         Box::new(TEXT)
     }

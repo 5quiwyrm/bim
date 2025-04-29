@@ -458,7 +458,7 @@ fn main() {
                             }
                             KeyCode::Backspace => {
                                 while buf.backspace().unwrap_or('a').is_whitespace() {}
-                                let mut last = ' ';
+                                let mut last;
                                 'killword: loop {
                                     last = buf.backspace().unwrap_or(' ');
                                     if !last.is_alphanumeric() {
