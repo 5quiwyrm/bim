@@ -166,3 +166,37 @@ Shown in bottom bar as "switch to mode: ".
 Exit by pressing <enter> or <esc>.
 Mode for finding modes.
 Writes directly to temp_str.
+
+## Syntax highlighting
+
+Currently syntax highlighting is implemented as a trait on structs.
+
+A sample implementation would be:
+```rs
+// ./src/languages/<langname>.rs
+use crate::languages::{
+    StyledChar,
+    Language,
+}
+pub struct <langname> {};
+pub const <langname but all caps>: <langname> = <langname> {};
+impl Language for <langname> {
+    ...
+}
+```
+
+```rs
+// ./src/languages.mod.rs
++ pub mod <langname>;
++ use <langname>::*;
+
+...
+
+    Box::new(MARKDOWN)
++ } else if <langname but all caps>.is_kind(path) {
++     Box::new(<langname but all caps>)
+  } else {
+
+...
+
+```
