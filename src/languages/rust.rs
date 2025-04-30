@@ -1,5 +1,6 @@
 //! Rust syntax highlighting support.
 
+use std::time::Instant;
 use crate::languages::{Language, StyledChar};
 
 pub struct Rust {}
@@ -9,7 +10,8 @@ impl Language for Rust {
         filepath.ends_with(".rs")
     }
 
-    fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
+    fn highlight(&self, buffer: &[String]) -> (Vec<Vec<StyledChar>>, u128) {
+        let start = Instant::now();
         let mut ret_buf: Vec<Vec<StyledChar>> = vec![];
         let mut ml_commented = false;
         let mut ml_comment_ending = 0;
@@ -89,7 +91,7 @@ impl Language for Rust {
             }
             ret_buf.push(push_buf);
         }
-        ret_buf
+        (ret_buf, start.elapsed().as_micros())
     }
 
     fn indent_size(&self) -> usize {

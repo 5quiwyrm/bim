@@ -1,6 +1,7 @@
 //! Markdown syntax highlighting support.
 
 use crate::languages::{Language, StyledChar};
+use std::time::Instant;
 
 pub struct Markdown {}
 pub const MARKDOWN: Markdown = Markdown {};
@@ -9,7 +10,8 @@ impl Language for Markdown {
         filepath.ends_with(".md")
     }
 
-    fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
+    fn highlight(&self, buffer: &[String]) -> (Vec<Vec<StyledChar>>, u128) {
+        let start = Instant::now();
         let mut ret_buf: Vec<Vec<StyledChar>> = vec![];
         let mut header_lvl;
         for line in buffer {
@@ -44,7 +46,7 @@ impl Language for Markdown {
             }
             ret_buf.push(push_buf);
         }
-        ret_buf
+        (ret_buf, start.elapsed().as_micros())
     }
     fn indent_size(&self) -> usize {
         4

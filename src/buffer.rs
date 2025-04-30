@@ -118,6 +118,8 @@ pub struct Buffer {
     pub contents: Vec<String>,
     /// Syntax highlighted contents. This is what is shown.
     pub highlighted_contents: Vec<Vec<languages::StyledChar>>,
+    /// Highlighting time taken.
+    pub highlighting_time: u128,
     /// Position of the cursor.
     pub cursor_pos: Cursor,
     /// Line number of the top line shown.
@@ -158,9 +160,11 @@ impl Buffer {
             .map(|s| s.to_string())
             .collect();
         let lang = languages::get_lang(filepath);
+        let (highlighted_contents, highlighting_time) = lang.highlight(&contents);
         Buffer {
             contents: contents.clone(),
-            highlighted_contents: lang.highlight(&contents),
+            highlighted_contents,
+            highlighting_time,
             top: 0,
             cursor_pos: Cursor { line: 0, idx: 0 },
             filepath: filepath.to_string(),
@@ -178,7 +182,7 @@ impl Buffer {
     /// Updates highlighting. Performance cost varies. Call as infrequently as possible.
     #[inline]
     pub fn update_highlighting(&mut self) {
-        self.highlighted_contents = self.lang.highlight(&self.contents);
+        (self.highlighted_contents, self.highlighting_time) = self.lang.highlight(&self.contents);
     }
 
     /// Moves the cursor left, wrapping around lines.
@@ -397,7 +401,7 @@ impl Buffer {
             linectr += 1;
         }
         let mut bottom_bar = format!(
-            "({}, {}) [{}] (>: {:?}) {}{}(act: {}) (lang: {}) {}",
+            "({}, {}) [{}] (>: {:?}) {}{}(act: {}) (lang: {} <> {} us) {}",
             self.cursor_pos.line + 1,
             self.cursor_pos.idx + 1,
             self.filepath,
@@ -414,6 +418,7 @@ impl Buffer {
             },
             self.lastact,
             self.lang.display_str(),
+            self.highlighting_time,
             pretty_str_event(event),
         );
         if bottom_bar.len() > width {
