@@ -194,7 +194,7 @@ pub fn main() {
                                 } else {
                                     let linect: String = buf.contents[buf.cursor_pos.line]
                                         .drain(buf.cursor_pos.idx..)
-                                        .collect();
+                                        .collect())
                                     buf.newline_below(&linect);
                                 }
                             }

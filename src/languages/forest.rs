@@ -39,18 +39,18 @@ impl Language for Forest {
                         "dup" | "drop" | "swap" | "rot" => "\x1b[35m",
                         "+" | "-" | "*" | "/" | "=" | ">" | "<" | "&" | "|" | "!" => "\x1b[36m",
                         "str" | "<>" | "." => "\x1b[31m",
-                        "{}" | "assoc" | "keys" | "vals" | "splat"
-                            => "\x1b[35m",
+                        "{}" | "assoc" | "keys" | "vals" | "splat" => "\x1b[35m",
                         "if" | "ifend" | "[" | "]" | "break" | "exit" => "\x1b[1;34m",
-                        "::" | ":" | "=>" | "->" | ";"
-                            | "include" => "\x1b[33m",
+                        "::" | ":" | "=>" | "->" | ";" | "include" => "\x1b[33m",
                         t if t.chars().nth(0) == Some('\"') => "\x1b[32m",
                         u if u.chars().all(|c| c.is_numeric()) => "\x1b[36m",
                         "nil" => "\x1b[31m",
                         _ => "",
                     })
                     .to_string(),
-                ).iter().for_each(|c| push_buf.push(c.clone()));
+                )
+                .iter()
+                .for_each(|c| push_buf.push(c.clone()));
             }
             //println!("{}", push_buf.last().unwrap());
             ret_buf.push(push_buf);

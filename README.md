@@ -9,6 +9,8 @@ This will have modes that change what keybinds do.
 This editor was initially built in Notepad, but once it achieved a usable
 state it started to be built in itself!
 
+Please don't use this for your own sanity's sake.
+
 ## Usage
 
 To run the project:
