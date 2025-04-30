@@ -113,12 +113,12 @@ impl Mode {
 }
 
 pub fn style_time(t: u128) -> String {
-    if t < 2000 {
-        format!("\x1b[32m{t}\x1b[0m")
-    } else if t < 16666 {
-        format!("\x1b[33m{t}\x1b[0m")
+    if t < 16666 {
+        format!("\x1b[32m{}\x1b[0m", 1000_000 / t)
+    } else if t < 50000 {
+        format!("\x1b[33m{}\x1b[0m", 1000_000 / t)
     } else {
-        format!("\x1b[31m{t}\x1b[0m")
+        format!("\x1b[31m{}\x1b[0m", 1000_000 / t)
     }
 }
 
@@ -299,6 +299,29 @@ impl Buffer {
         }
     }
 
+    // This doesn't reload the highlighting, so use at your own risk.
+    pub fn fast_backspace(&mut self) -> Option<char> {
+        let t = self.cursor_pos.idx;
+        if t == 0 {
+            if self.cursor_pos.line != 0 {
+                let currline = self.contents[self.cursor_pos.line].clone();
+                let oldlen = self.contents[self.cursor_pos.line - 1].len();
+                self.contents[self.cursor_pos.line - 1].push_str(&currline);
+                self.contents.remove(self.cursor_pos.line);
+                self.cursor_pos.line -= 1;
+                self.cursor_pos.idx = oldlen;
+                Some('\n')
+            } else if !self.contents[0].is_empty() {
+                Some(self.contents[0].remove(0))
+            } else {
+                None
+            }
+        } else {
+            self.cursor_pos.idx -= 1;
+            Some(self.contents[self.cursor_pos.line].remove(t - 1))
+        }
+    }
+
     #[inline]
     pub fn type_char(&mut self, ch: char) {
         self.contents[self.cursor_pos.line].insert(self.cursor_pos.idx, ch);
@@ -411,11 +434,8 @@ impl Buffer {
             linectr += 1;
         }
         let mut bottom_bar = format!(
-            "({}, {}) [{}] (>: {:?}) {}{}(act: {}) (lang: {} <> {} us) {}",
-            self.cursor_pos.line + 1,
-            self.cursor_pos.idx + 1,
+            "[{}] {}{}(act: {}) (lang: {} :: {} fps) {}",
             self.filepath,
-            self.indent_lvl,
             if self.find_str.is_empty() {
                 String::new()
             } else {
@@ -434,8 +454,7 @@ impl Buffer {
         if bottom_bar.len() > width {
             bottom_bar.truncate(width);
         }
-        bottom_bar = format!("{bottom_bar: <width$}");
-        tb_printed.push_str(format!("{bottom_bar: <width$}").as_str());
+        tb_printed.push_str(format!("{bottom_bar: <width$}\x1b[0m").as_str());
         tb_printed.push('\n');
         tb_printed.push_str(
             format!(
