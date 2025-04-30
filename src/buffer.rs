@@ -112,6 +112,16 @@ impl Mode {
     }
 }
 
+pub fn style_time(t: u128) -> String {
+    if t < 2000 {
+        format!("\x1b[32m{t}\x1b[0m")
+    } else if t < 16666 {
+        format!("\x1b[33m{t}\x1b[0m")
+    } else {
+        format!("\x1b[31m{t}\x1b[0m")
+    }
+}
+
 /// Structure for storing the current displayed buffer.
 pub struct Buffer {
     /// Contents of the file, as lines. This is what is modified.
@@ -418,7 +428,7 @@ impl Buffer {
             },
             self.lastact,
             self.lang.display_str(),
-            self.highlighting_time,
+            style_time(self.highlighting_time),
             pretty_str_event(event),
         );
         if bottom_bar.len() > width {
