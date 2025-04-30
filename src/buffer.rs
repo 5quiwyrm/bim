@@ -358,6 +358,9 @@ impl Buffer {
         print!("\x1b[J\x1b[H");
         let (widthu, heightu) = terminal::size().unwrap();
         let width = widthu as usize;
+        // the width calculations are wrong on posix
+        // uncomment the next line on posix:
+        // width -= 1;
         let height = heightu as usize;
         let bottom_pad = 2;
         if self.cursor_pos.line > self.top + height - bottom_pad - 3 {
@@ -451,8 +454,9 @@ impl Buffer {
             style_time(self.highlighting_time),
             pretty_str_event(event),
         );
-        if bottom_bar.len() > width {
-            bottom_bar.truncate(width);
+        let escape_code_size = 9;
+        if bottom_bar.len() > width + escape_code_size {
+            bottom_bar.truncate(width + escape_code_size);
         }
         tb_printed.push_str(format!("{bottom_bar: <width$}\x1b[0m").as_str());
         tb_printed.push('\n');
