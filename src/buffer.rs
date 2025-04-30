@@ -401,7 +401,7 @@ impl Buffer {
                         }
                         b if b == id => {
                             if content.ch == ' ' {
-                                tb_printed.push_str("\x1b[33m|\x1b[0m");
+                                tb_printed.push_str("\x1b[2;33m|\x1b[0m");
                             } else {
                                 tb_printed.push_str(format!("\x1b[33m{content}\x1b[0m").as_str());
                             }
