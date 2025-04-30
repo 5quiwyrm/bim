@@ -43,6 +43,15 @@ impl StyledChar {
         }
         ret_vec
     }
+
+    pub fn colour_string(s: &str, style: String) -> Vec<StyledChar> {
+        s.chars()
+            .map(|ch: char| StyledChar {
+                style: style.clone(),
+                ch,
+            })
+            .collect()
+    }
 }
 
 // Add language modules
@@ -56,6 +65,9 @@ use text::*;
 pub mod markdown;
 use markdown::*;
 
+pub mod forest;
+use forest::*;
+
 // Update get_lang if you added a new language
 
 pub fn get_lang(path: &str) -> Box<dyn Language> {
@@ -63,6 +75,8 @@ pub fn get_lang(path: &str) -> Box<dyn Language> {
         Box::new(RUST)
     } else if MARKDOWN.is_kind(path) {
         Box::new(MARKDOWN)
+    } else if FOREST.is_kind(path) {
+        Box::new(FOREST)
     } else {
         Box::new(TEXT)
     }

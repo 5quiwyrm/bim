@@ -11,7 +11,10 @@ impl Language for Text {
     }
     fn highlight(&self, buffer: &[String]) -> (Vec<Vec<StyledChar>>, u128) {
         let start = Instant::now();
-        (buffer.iter().map(|l| StyledChar::from_string(l)).collect(), start.elapsed().as_micros())
+        (
+            buffer.iter().map(|l| StyledChar::from_string(l)).collect(),
+            start.elapsed().as_micros(),
+        )
     }
     fn indent_size(&self) -> usize {
         2

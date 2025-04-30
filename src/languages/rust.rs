@@ -1,7 +1,7 @@
 //! Rust syntax highlighting support.
 
-use std::time::Instant;
 use crate::languages::{Language, StyledChar};
+use std::time::Instant;
 
 pub struct Rust {}
 pub const RUST: Rust = Rust {};

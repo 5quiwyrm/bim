@@ -424,7 +424,6 @@ pub fn main() {
                                     buf.cursor_pos = loc;
                                 }
                             }
-                            buf.update_highlighting();
                         }
                         KeyCode::Char('x') => {
                             buf.mode = Mode::Switch;
@@ -480,16 +479,18 @@ pub fn main() {
                             buf.reload_file();
                         }
                         KeyCode::Backspace => {
-                            while buf.backspace().unwrap_or('a').is_whitespace() {}
+                            while buf.fast_backspace().unwrap_or('a').is_whitespace() {}
                             let mut last;
                             'killword: loop {
-                                last = buf.backspace().unwrap_or(' ');
+                                last = buf.fast_backspace().unwrap_or(' ');
                                 if !last.is_alphanumeric() {
                                     break 'killword;
                                 }
                             }
                             if last != '\n' {
                                 buf.type_char(last);
+                            } else {
+                                buf.update_highlighting();
                             }
                         }
                         _ => {}
