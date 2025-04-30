@@ -11,7 +11,6 @@ use crossterm::{
 use std::{
     env::args,
     io::{self, Write},
-    time::Duration,
 };
 
 /// Returns matching brace for given open brace.
@@ -253,7 +252,7 @@ pub fn main() {
                         }
                         KeyCode::Tab => {
                             (0..buf.lang.indent_size()).for_each(|_| {
-                                buf.contents[buf.cursor_pos.line].insert(buf.cursor_pos.idx, ' ')
+                                buf.contents[buf.cursor_pos.line].insert(buf.cursor_pos.idx, ' ');
                             });
                             buf.cursor_pos.idx += buf.lang.indent_size();
                             buf.indent_lvl += 1;

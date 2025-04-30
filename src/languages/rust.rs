@@ -95,4 +95,8 @@ impl Language for Rust {
     fn indent_size(&self) -> usize {
         4
     }
+
+    fn display_str(&self) -> &str {
+        "Rust"
+    }
 }

@@ -14,4 +14,7 @@ impl Language for Text {
     fn indent_size(&self) -> usize {
         2
     }
+    fn display_str(&self) -> &str {
+        "Text"
+    }
 }

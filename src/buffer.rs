@@ -397,7 +397,7 @@ impl Buffer {
             linectr += 1;
         }
         let mut bottom_bar = format!(
-            "({}, {}) [{}] (>: {:?}) {}{}(act: {}) {}",
+            "({}, {}) [{}] (>: {:?}) {}{}(act: {}) (lang: {}) {}",
             self.cursor_pos.line + 1,
             self.cursor_pos.idx + 1,
             self.filepath,
@@ -413,8 +413,12 @@ impl Buffer {
                 format!("(-> {:?}) ", self.replace_str)
             },
             self.lastact,
+            self.lang.display_str(),
             pretty_str_event(event),
         );
+        if bottom_bar.len() > width {
+            bottom_bar.truncate(width);
+        }
         bottom_bar = format!("{bottom_bar: <width$}");
         tb_printed.push_str(format!("{bottom_bar: <width$}").as_str());
         tb_printed.push('\n');
