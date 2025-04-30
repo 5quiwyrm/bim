@@ -1,9 +1,6 @@
 //! Rust syntax highlighting support.
 
-use crate::languages::{
-    StyledChar,
-    Language,
-};
+use crate::languages::{Language, StyledChar};
 
 pub struct Rust {}
 pub const RUST: Rust = Rust {};
@@ -41,18 +38,13 @@ impl Language for Rust {
                         }
                         _ => {}
                     }
-                } else if !escaping
-                    && !ml_commented
-                    && !commented
-                    && ml_comment_ending == 0
-                {
+                } else if !escaping && !ml_commented && !commented && ml_comment_ending == 0 {
                     if ch == '\"' {
                         if quoted {
                             quote_ending = true;
                         }
                         quoted = !quoted;
-                    } else if charquoted == 0
-                        && !quoted {
+                    } else if charquoted == 0 && !quoted {
                         if ch == '\'' {
                             if line_chars.get(idx + 2) == Some(&'\'')
                                 && line_chars.get(idx + 1) != Some(&'\\')

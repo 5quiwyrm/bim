@@ -1,9 +1,6 @@
 //! Markdown syntax highlighting support.
 
-use crate::languages::{
-    StyledChar,
-    Language,
-};
+use crate::languages::{Language, StyledChar};
 
 pub struct Markdown {}
 pub const MARKDOWN: Markdown = Markdown {};
@@ -36,7 +33,8 @@ impl Language for Markdown {
                 5 => "\x1b[31m",
                 6 => "\x1b[36m",
                 _ => "",
-            }).to_string();
+            })
+            .to_string();
             for ch in line_chars {
                 let c = StyledChar {
                     style: style.clone(),

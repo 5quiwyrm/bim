@@ -26,14 +26,14 @@ impl fmt::Display for StyledChar {
 }
 
 impl StyledChar {
-    /// Generates StyledChar from raw character, with no styling.
+    /// Generates `StyledChar` from raw character, with no styling.
     pub fn from_char(ch: char) -> StyledChar {
         StyledChar {
             style: String::new(),
             ch,
         }
     }
-    /// Generates Vec<StyledChar> from string, with no styling.
+    /// Generates `Vec<StyledChar>` from string, with no styling.
     pub fn from_string(s: &str) -> Vec<StyledChar> {
         let mut ret_vec: Vec<StyledChar> = vec![];
         for ch in s.chars() {

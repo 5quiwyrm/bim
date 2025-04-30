@@ -1,9 +1,6 @@
 //! Default text support.
 
-use crate::languages::{
-    StyledChar,
-    Language,
-};
+use crate::languages::{Language, StyledChar};
 
 pub struct Text {}
 pub const TEXT: Text = Text {};
@@ -12,11 +9,7 @@ impl Language for Text {
         true
     }
     fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
-        buffer
-            .iter()
-            .map(|l| StyledChar::from_string(l))
-            .collect(
-)
+        buffer.iter().map(|l| StyledChar::from_string(l)).collect()
     }
     fn indent_size(&self) -> usize {
         2

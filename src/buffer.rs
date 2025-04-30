@@ -1,12 +1,15 @@
 //! Buffer and cursor handling module.
 
-
 use crate::languages;
 use crossterm::{event, terminal};
-use std::{collections::HashMap, fmt::{self, Write}, fs};
+use std::{
+    collections::HashMap,
+    fmt::{self, Write},
+    fs,
+};
 
 /// Prettifies events to string for printing.
-fn pretty_str_event(event: &event::Event) -> String {
+pub fn pretty_str_event(event: &event::Event) -> String {
     if let event::Event::Key(key) = event {
         if key.modifiers == event::KeyModifiers::NONE {
             format!("{}", key.code)
@@ -69,7 +72,7 @@ pub enum Mode {
 impl Mode {
     /// Primarily used for switching modes.
     /// To add more aliases for modes, the match statement below should be changed.
-    pub fn from_str(s: &str) -> Mode {
+    pub fn from_string(s: &str) -> Mode {
         match s.trim() {
             "paste" | "p" => Mode::Paste,
             "replace" | "r" => Mode::Replace,
@@ -99,7 +102,7 @@ impl fmt::Display for Mode {
 }
 
 impl Mode {
-    /// Determines whether the temp_str buffer should be shown.
+    /// Determines whether the `temp_str` buffer should be shown.
     pub fn show_temp(self) -> bool {
         use Mode::*;
         match self {
@@ -374,10 +377,9 @@ impl Buffer {
                 }
                 tb_printed.push('\n');
             } else if content[linectr].len() > truewidth {
-                content[linectr]
-                    .iter()
-                    .take(truewidth)
-                    .for_each(|c|{ write!(&mut tb_printed, "{c}");});
+                content[linectr].iter().take(truewidth).for_each(|c| {
+                    _ = write!(&mut tb_printed, "{c}");
+                });
                 tb_printed.push('\n');
             } else {
                 let mut i = 0;
