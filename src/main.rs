@@ -194,7 +194,7 @@ pub fn main() {
                                 } else {
                                     let linect: String = buf.contents[buf.cursor_pos.line]
                                         .drain(buf.cursor_pos.idx..)
-                                        .collect())
+                                        .collect();
                                     buf.newline_below(&linect);
                                 }
                             }
@@ -308,12 +308,16 @@ pub fn main() {
                             buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                         }
                         KeyCode::Char('l') => {
-                            buf.contents.remove(buf.cursor_pos.line);
-                            buf.cursor_pos.idx = 0;
-                            if buf.cursor_pos.line != 0 {
-                                buf.cursor_pos.line -= 1;
+                            if buf.contents.len() != 1 {
+                                buf.contents.remove(buf.cursor_pos.line);
+                                buf.cursor_pos.idx = 0;
+                                if buf.cursor_pos.line != 0 {
+                                    buf.cursor_pos.line -= 1;
+                                }
+                                buf.update_highlighting();
+                            } else {
+                                buf.contents[0].clear();
                             }
-                            buf.update_highlighting();
                         }
                         KeyCode::Char(',') => {
                             if buf.indent_lvl != 0 {
@@ -463,10 +467,12 @@ pub fn main() {
                             buf.indent_lvl = 0;
                         }
                         KeyCode::Char('k') => {
-                            buf.contents[buf.cursor_pos.line]
-                                .replace_range((buf.indent_lvl * 4)..buf.cursor_pos.idx, "");
-                            buf.cursor_pos.idx = buf.indent_lvl * 4;
-                            buf.update_highlighting();
+                            if buf.indent_lvl * 4 != buf.cursor_pos.idx {
+                                buf.contents[buf.cursor_pos.line]
+                                    .replace_range((buf.indent_lvl * 4)..buf.cursor_pos.idx, "");
+                                buf.cursor_pos.idx = buf.indent_lvl * 4;
+                                buf.update_highlighting();
+                            }
                         }
                         KeyCode::Char('K') => {
                             buf.contents[buf.cursor_pos.line].truncate(buf.cursor_pos.idx);

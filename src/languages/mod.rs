@@ -68,6 +68,9 @@ use markdown::*;
 pub mod forest;
 use forest::*;
 
+pub mod tinylisp;
+use tinylisp::*;
+
 // Update get_lang if you added a new language
 
 pub fn get_lang(path: &str) -> Box<dyn Language> {
@@ -77,6 +80,8 @@ pub fn get_lang(path: &str) -> Box<dyn Language> {
         Box::new(MARKDOWN)
     } else if FOREST.is_kind(path) {
         Box::new(FOREST)
+    } else if TINYLISP.is_kind(path) {
+        Box::new(TINYLISP)
     } else {
         Box::new(TEXT)
     }

@@ -114,11 +114,11 @@ impl Mode {
 
 pub fn style_time(t: u128) -> String {
     if t < 16666 {
-        format!("\x1b[32m{}\x1b[0m", 1000_000 / t)
+        format!("\x1b[32m{}\x1b[0m", 1_000_000 / (t + 1))
     } else if t < 50000 {
-        format!("\x1b[33m{}\x1b[0m", 1000_000 / t)
+        format!("\x1b[33m{}\x1b[0m", 1_000_000 / (t + 1))
     } else {
-        format!("\x1b[31m{}\x1b[0m", 1000_000 / t)
+        format!("\x1b[31m{}\x1b[0m", 1_000_000 / (t + 1))
     }
 }
 
