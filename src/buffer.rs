@@ -42,7 +42,7 @@ pub enum Action {
 impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Action::None => write!(f, ""),
+            Action::None => write!(f, "none"),
             Action::Save => write!(f, "save"),
         }
     }
@@ -114,11 +114,11 @@ impl Mode {
 
 pub fn style_time(t: u128) -> String {
     if t < 16666 {
-        format!("\x1b[32m{}\x1b[0m", 1_000_000 / (t + 1))
+        format!("\x1b[32m{}\x1b[0m", 1_000_000 / (t + 1)) // > 60
     } else if t < 50000 {
-        format!("\x1b[33m{}\x1b[0m", 1_000_000 / (t + 1))
+        format!("\x1b[33m{}\x1b[0m", 1_000_000 / (t + 1)) // 60 ~ 20
     } else {
-        format!("\x1b[31m{}\x1b[0m", 1_000_000 / (t + 1))
+        format!("\x1b[31m{}\x1b[0m", 1_000_000 / (t + 1)) // < 20
     }
 }
 
@@ -375,7 +375,7 @@ impl Buffer {
         let indent_size = self.lang.indent_size();
         let spaces = 2;
         let mut sidesize = spaces;
-        let mut lenfile = content.len() + 1;
+        let mut lenfile = content.len();
         while lenfile != 0 {
             sidesize += 1;
             lenfile /= 10;
@@ -437,7 +437,7 @@ impl Buffer {
             linectr += 1;
         }
         let mut bottom_bar = format!(
-            "[{}] {}{}(act: {}) (lang: {} :: {} fps) {}",
+            "[{}] {}{}(act: {}) ({}: {} fps) {}",
             self.filepath,
             if self.find_str.is_empty() {
                 String::new()
@@ -454,7 +454,7 @@ impl Buffer {
             style_time(self.highlighting_time),
             pretty_str_event(event),
         );
-        let escape_code_size = 9;
+        let escape_code_size = 5;
         if bottom_bar.len() > width + escape_code_size {
             bottom_bar.truncate(width + escape_code_size);
         }

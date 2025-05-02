@@ -547,6 +547,7 @@ pub fn main() {
                     Mods::Ctrl => match key.code {
                         KeyCode::Char('r') => {
                             buf.reload_file();
+                            print!("\x1bc");
                         }
                         KeyCode::Backspace => {
                             while buf.fast_backspace().unwrap_or('a').is_whitespace() {}
