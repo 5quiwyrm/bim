@@ -1,4 +1,4 @@
-//! Support for tinylisp.
+//! Support for tinylisp syntax highlighting.
 
 use crate::languages::{Language, StyledChar};
 use std::time::Instant;

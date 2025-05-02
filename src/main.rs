@@ -314,10 +314,10 @@ pub fn main() {
                                 if buf.cursor_pos.line != 0 {
                                     buf.cursor_pos.line -= 1;
                                 }
-                                buf.update_highlighting();
                             } else {
                                 buf.contents[0].clear();
                             }
+                            buf.update_highlighting();
                         }
                         KeyCode::Char(',') => {
                             if buf.indent_lvl != 0 {
@@ -477,6 +477,70 @@ pub fn main() {
                         KeyCode::Char('K') => {
                             buf.contents[buf.cursor_pos.line].truncate(buf.cursor_pos.idx);
                             buf.update_highlighting();
+                        }
+                        KeyCode::Char('w') => {
+                            while buf.contents[buf.cursor_pos.line]
+                                .chars()
+                                .nth(buf.cursor_pos.idx)
+                                .unwrap_or(' ')
+                                .is_whitespace()
+                            {
+                                if !buf.move_right() {
+                                    break;
+                                }
+                            }
+                            while buf.contents[buf.cursor_pos.line]
+                                .chars()
+                                .nth(buf.cursor_pos.idx)
+                                .unwrap_or(' ')
+                                .is_alphanumeric()
+                            {
+                                if !buf.move_right() {
+                                    break;
+                                }
+                            }
+                            while buf.contents[buf.cursor_pos.line]
+                                .chars()
+                                .nth(buf.cursor_pos.idx)
+                                .unwrap_or(' ')
+                                .is_whitespace()
+                            {
+                                if !buf.move_right() {
+                                    break;
+                                }
+                            }
+                        }
+                        KeyCode::Char('W') => {
+                            while buf.contents[buf.cursor_pos.line]
+                                .chars()
+                                .nth(buf.cursor_pos.idx)
+                                .unwrap_or(' ')
+                                .is_whitespace()
+                            {
+                                if !buf.move_left() {
+                                    break;
+                                }
+                            }
+                            while buf.contents[buf.cursor_pos.line]
+                                .chars()
+                                .nth(buf.cursor_pos.idx)
+                                .unwrap_or(' ')
+                                .is_alphanumeric()
+                            {
+                                if !buf.move_left() {
+                                    break;
+                                }
+                            }
+                            while buf.contents[buf.cursor_pos.line]
+                                .chars()
+                                .nth(buf.cursor_pos.idx)
+                                .unwrap_or(' ')
+                                .is_whitespace()
+                            {
+                                if !buf.move_left() {
+                                    break;
+                                }
+                            }
                         }
                         _ => {}
                     },
