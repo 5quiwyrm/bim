@@ -276,6 +276,7 @@ pub fn main() {
                             buf.cursor_pos.line = 0;
                             buf.cursor_pos.idx = 0;
                         }
+                        // My custom keybinds
                         KeyCode::Char('c') => {
                             buf.move_left();
                         }
