@@ -71,6 +71,9 @@ use forest::*;
 pub mod tinylisp;
 use tinylisp::*;
 
+pub mod haskell;
+use haskell::*;
+
 // Update get_lang if you added a new language
 
 pub fn get_lang(path: &str) -> Box<dyn Language> {
@@ -82,6 +85,8 @@ pub fn get_lang(path: &str) -> Box<dyn Language> {
         Box::new(FOREST)
     } else if TINYLISP.is_kind(path) {
         Box::new(TINYLISP)
+    } else if HASKELL.is_kind(path) {
+        Box::new(HASKELL)
     } else {
         Box::new(TEXT)
     }

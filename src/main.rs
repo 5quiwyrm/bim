@@ -342,7 +342,7 @@ pub fn main() {
                             while currline.next() == Some(' ') {
                                 spaces += 1;
                             }
-                            buf.indent_lvl = spaces / 4;
+                            buf.indent_lvl = spaces / buf.lang.indent_size();
                         }
                         KeyCode::Char('/') => {
                             if buf.mode == Mode::Find {
@@ -467,10 +467,13 @@ pub fn main() {
                             buf.indent_lvl = 0;
                         }
                         KeyCode::Char('k') => {
-                            if buf.indent_lvl * 4 != buf.cursor_pos.idx {
-                                buf.contents[buf.cursor_pos.line]
-                                    .replace_range((buf.indent_lvl * 4)..buf.cursor_pos.idx, "");
-                                buf.cursor_pos.idx = buf.indent_lvl * 4;
+                            let indent_size = buf.lang.indent_size();
+                            if buf.indent_lvl * indent_size != buf.cursor_pos.idx {
+                                buf.contents[buf.cursor_pos.line].replace_range(
+                                    (buf.indent_lvl * indent_size)..buf.cursor_pos.idx,
+                                    "",
+                                );
+                                buf.cursor_pos.idx = buf.indent_lvl * indent_size;
                                 buf.update_highlighting();
                             }
                         }
