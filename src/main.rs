@@ -1,6 +1,5 @@
 pub mod buffer;
 use buffer::*;
-
 pub mod languages;
 
 use crossterm::{
@@ -312,11 +311,9 @@ pub fn main() {
                             if buf.contents.len() != 1 {
                                 buf.contents.remove(buf.cursor_pos.line);
                                 buf.cursor_pos.idx = 0;
-                                if buf.cursor_pos.line != 0 {
-                                    buf.cursor_pos.line -= 1;
-                                }
                             } else {
                                 buf.contents[0].clear();
+                                buf.cursor_pos.idx = 0;
                             }
                             buf.update_highlighting();
                         }
@@ -403,6 +400,7 @@ pub fn main() {
                             } else {
                                 buf.contents.insert(0, String::new());
                                 buf.cursor_pos.idx = 0;
+                                buf.update_highlighting();
                             }
                         }
                         KeyCode::Char('m') => {
@@ -544,6 +542,30 @@ pub fn main() {
                                 if !buf.move_left() {
                                     break;
                                 }
+                            }
+                        }
+                        KeyCode::Char('y') => {
+                            buf.contents.insert(
+                                buf.cursor_pos.line,
+                                buf.contents[buf.cursor_pos.line].clone(),
+                            );
+                            buf.update_highlighting();
+                            buf.move_down();
+                        }
+                        KeyCode::Char('A') => {
+                            if buf.cursor_pos.line + 1 < buf.contents.len() {
+                                buf.contents
+                                    .swap(buf.cursor_pos.line, buf.cursor_pos.line + 1);
+                                buf.update_highlighting();
+                                buf.move_down();
+                            }
+                        }
+                        KeyCode::Char('E') => {
+                            if buf.cursor_pos.line != 0 {
+                                buf.contents
+                                    .swap(buf.cursor_pos.line, buf.cursor_pos.line - 1);
+                                buf.move_up();
+                                buf.update_highlighting();
                             }
                         }
                         _ => {}

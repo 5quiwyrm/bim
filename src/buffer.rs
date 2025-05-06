@@ -169,7 +169,11 @@ impl Buffer {
             .lines()
             .map(|s| s.to_string())
             .collect();
-        let lang = languages::get_lang(filepath);
+        let lang = if contents[0].contains("use-ext:") {
+            languages::get_lang(&contents[0])
+        } else {
+            languages::get_lang(filepath)
+        };
         let (highlighted_contents, highlighting_time) = lang.highlight(&contents);
         Buffer {
             contents: contents.clone(),
@@ -184,7 +188,7 @@ impl Buffer {
             temp_str: String::new(),
             marklist: HashMap::new(),
             indent_lvl: 0,
-            lang: languages::get_lang(filepath),
+            lang,
             mode: Mode::Default,
         }
     }
