@@ -82,8 +82,12 @@ M-h -> Where n is the length of the contents of find_str, this command replaces
 M-j -> Joins the current line with the line below, separated by a space.
 M-k -> Kill until indent level.
 M-K -> Kill until end of line (forwards).
+M-y -> Duplicates line.
+M-A -> Swaps current line with line below.
+M-E -> Swaps current line with line above.
 
-C-r -> Reloads the file.
+C-r -> Reloads the file, moving to the start.
+C-z -> Rolls the file back to the last save.
 C-Backspace -> Deletes word backwards (this effectively deletes whitespace
   until finding a non-whitespace charatcer, then deletes until finding a
   non-alphanumeric character).

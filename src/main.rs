@@ -167,6 +167,40 @@ pub fn main() {
                                 }
                                 buf.mode = Mode::Default;
                             }
+                            Mode::Copy => {
+                                let linenums: Vec<&str> = buf.temp_str.split(|c: char| c.is_whitespace()).collect();
+                                if linenums.len() == 2 {
+                                    let from = linenums[0].parse::<usize>();
+                                    if from.is_err() {
+                                        continue 'ed;
+                                    }
+                                    let f = from.unwrap();
+                                    if f > buf.contents.len() {
+                                        continue 'ed;
+                                    }
+                                    let to = linenums[1].parse::<usize>();
+                                    if to.is_err() {
+                                        continue 'ed;
+                                    }
+                                    let t = to.unwrap();
+                                    if t > buf.contents.len() {
+                                        continue 'ed;
+                                    }
+                                    if f >= t || f == 0 {
+                                        continue 'ed;
+                                    }
+
+                                    let mut i = 0;
+                                    let paste_contents = &buf.contents.clone()[f - 1..t];
+                                    paste_contents.iter().for_each(|l| {
+                                        buf.contents.insert(buf.cursor_pos.line + i, l.to_string());
+                                        i += 1;
+                                    });
+                                    buf.update_highlighting();
+                                }
+                                buf.temp_str.clear();
+                                buf.mode = Mode::Default;
+                            }
                             Mode::OpenFile => {
                                 buf.save();
                                 buf.filepath = buf.temp_str.clone();
@@ -552,6 +586,9 @@ pub fn main() {
                             buf.update_highlighting();
                             buf.move_down();
                         }
+                        KeyCode::Char('Y') => {
+                            buf.mode = Mode::Copy;
+                        }
                         KeyCode::Char('A') => {
                             if buf.cursor_pos.line + 1 < buf.contents.len() {
                                 buf.contents
@@ -573,7 +610,18 @@ pub fn main() {
                     Mods::Ctrl => match key.code {
                         KeyCode::Char('r') => {
                             buf.reload_file();
+                            buf.cursor_pos.line = 0;
+                            buf.cursor_pos.idx = 0;
                             print!("\x1bc");
+                        }
+                        KeyCode::Char('z') => {
+                            buf.reload_file();
+                            if buf.cursor_pos.line >= buf.contents.len() {
+                                buf.cursor_pos.line = buf.contents.len() - 1;
+                            }
+                            if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                            }
                         }
                         KeyCode::Backspace => {
                             while buf.fast_backspace().unwrap_or('a').is_whitespace() {}

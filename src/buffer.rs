@@ -65,6 +65,8 @@ pub enum Mode {
     Goto,
     /// Openfile mode.
     OpenFile,
+    /// Copy mode.
+    Copy,
     /// Mode switching mode.
     Switch,
 }
@@ -81,6 +83,7 @@ impl Mode {
             "goto" | "g" => Mode::Goto,
             "switch" | "s" => Mode::Switch,
             "open" | "o" | "openfile" => Mode::OpenFile,
+            "copy" | "c" => Mode::Copy,
             _ => Mode::Default,
         }
     }
@@ -96,6 +99,7 @@ impl fmt::Display for Mode {
             Mode::ReplaceStr => write!(f, "replace str"),
             Mode::Goto => write!(f, "goto"),
             Mode::OpenFile => write!(f, "open file"),
+            Mode::Copy => write!(f, "copying (from -> to)"),
             Mode::Switch => write!(f, "switch to mode"),
         }
     }
@@ -107,7 +111,7 @@ impl Mode {
         use Mode::*;
         match self {
             Default | Paste | Replace | Find | ReplaceStr => false,
-            Goto | Switch | OpenFile => true,
+            Goto | Switch | OpenFile | Copy => true,
         }
     }
 }
@@ -351,10 +355,12 @@ impl Buffer {
             .lines()
             .map(|s| s.to_string())
             .collect();
-        self.cursor_pos.idx = 0;
-        self.cursor_pos.line = 0;
         self.save();
-        self.lang = languages::get_lang(&self.filepath);
+        self.lang = if self.contents[0].contains("use-ext:") {
+            languages::get_lang(&self.contents[0])
+        } else {
+            languages::get_lang(&self.filepath)
+        };
         self.update_highlighting();
     }
 
@@ -390,7 +396,7 @@ impl Buffer {
 
         let mut linectr = self.top;
         while linectr < self.top + height - bottom_pad && linectr < content.len() {
-            tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+            tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m",linectr + 1).as_str());
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
                 let mut line_content = content[self.cursor_pos.line].iter();
