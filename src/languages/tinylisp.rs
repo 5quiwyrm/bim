@@ -32,9 +32,9 @@ impl Language for Tinylisp {
                     acc.clear();
                     tks.push(")".to_string());
                 }
-                if change && !wrapped
+                if (change && !wrapped)
                     || (c == '(' && !escaping && !wrapped)
-                    || (c.is_whitespace() && !escaping)
+                    || (c.is_whitespace() && !escaping && !wrapped)
                 {
                     tks.push(acc.clone());
                     acc.clear();
