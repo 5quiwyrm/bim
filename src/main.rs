@@ -209,6 +209,12 @@ pub fn main() {
                                 buf.filepath = buf.temp_str.clone();
                                 buf.reload_file();
                                 buf.mode = Mode::Default;
+                                if buf.cursor_pos.line >= buf.contents.len() {
+                                    buf.cursor_pos.line = buf.contents.len() - 1;
+                                }
+                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                }
                             }
                             _ => {
                                 if let Some('}' | ']' | ')') = buf.contents[buf.cursor_pos.line]
