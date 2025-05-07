@@ -166,40 +166,52 @@ pub fn main() {
                                                 buf.contents[buf.cursor_pos.line].len();
                                         }
                                     }
+                                } else {
+                                    buf.lastact = String::from("Inval line num");
                                 }
                                 buf.mode = Mode::Default;
                             }
                             Mode::Copy => {
-                                let linenums: Vec<&str> =
-                                    buf.temp_str.split(|c: char| c.is_whitespace()).collect();
-                                if linenums.len() == 2 {
-                                    let from = linenums[0].parse::<usize>();
-                                    if from.is_err() {
-                                        continue 'ed;
-                                    }
-                                    let f = from.unwrap();
-                                    if f > buf.contents.len() {
-                                        continue 'ed;
-                                    }
-                                    let to = linenums[1].parse::<usize>();
-                                    if to.is_err() {
-                                        continue 'ed;
-                                    }
-                                    let t = to.unwrap();
-                                    if t > buf.contents.len() {
-                                        continue 'ed;
-                                    }
-                                    if f >= t || f == 0 {
-                                        continue 'ed;
-                                    }
+                                'cpy: {
+                                    let linenums: Vec<&str> =
+                                        buf.temp_str.split_whitespace().collect();
+                                    if linenums.len() == 2 {
+                                        let from = linenums[0].parse::<usize>();
+                                        if from.is_err() {
+                                            buf.lastact = String::from("Inval from");
+                                            break 'cpy;
+                                        }
+                                        let f = from.unwrap();
+                                        if f > buf.contents.len() {
+                                            buf.lastact = String::from("Inval from");
+                                            break 'cpy;
+                                        }
+                                        let to = linenums[1].parse::<usize>();
+                                        if to.is_err() {
+                                            buf.lastact = String::from("Inval to");
+                                            break 'cpy;
+                                        }
+                                        let t = to.unwrap();
+                                        if t > buf.contents.len() {
+                                            buf.lastact = String::from("Inval to");
+                                            break 'cpy;
+                                        }
+                                        if f >= t || f == 0 {
+                                            buf.lastact = String::from("assert: f < t");
+                                            break 'cpy;
+                                        }
 
-                                    let mut i = 0;
-                                    let paste_contents = &buf.contents.clone()[f - 1..t];
-                                    paste_contents.iter().for_each(|l| {
-                                        buf.contents.insert(buf.cursor_pos.line + i, l.to_string());
-                                        i += 1;
-                                    });
-                                    buf.update_highlighting();
+                                        let mut i = 0;
+                                        let paste_contents = &buf.contents.clone()[f - 1..t];
+                                        paste_contents.iter().for_each(|l| {
+                                            buf.contents
+                                                .insert(buf.cursor_pos.line + i, l.to_string());
+                                            i += 1;
+                                        });
+                                        buf.update_highlighting();
+                                    } else {
+                                        buf.lastact = format!("{} args given, 2 expected", linenums.len());
+                                    }
                                 }
                                 buf.temp_str.clear();
                                 buf.mode = Mode::Default;
@@ -597,6 +609,7 @@ pub fn main() {
                         }
                         KeyCode::Char('Y') => {
                             buf.mode = Mode::Copy;
+                            buf.temp_str.clear();
                         }
                         KeyCode::Char('A') => {
                             if buf.cursor_pos.line + 1 < buf.contents.len() {
@@ -612,6 +625,14 @@ pub fn main() {
                                     .swap(buf.cursor_pos.line, buf.cursor_pos.line - 1);
                                 buf.move_up();
                                 buf.update_highlighting();
+                            }
+                        }
+                        KeyCode::Char('L') => {
+                            if buf.mode.show_temp() {
+                                let numbuf = format!("{} ", buf.cursor_pos.line + 1);
+                                for c in numbuf.chars() {
+                                    buf.temp_str.push(c);
+                                }
                             }
                         }
                         _ => {}
@@ -652,15 +673,12 @@ pub fn main() {
                     Mods::CtrlAlt => {}
                 }
                 let e = start.elapsed().as_micros();
-                if buf.iter_time < e {
-                    buf.iter_time += e;
-                    buf.iter_time >>= 1;
-                }
+                buf.iter_time += e;
+                buf.iter_time >>= 1;
             }
         }
         buf.print(&event);
         stdout.flush().unwrap();
-        buf.lastact = Action::None;
     }
     print!("\x1bc");
     buf.save();

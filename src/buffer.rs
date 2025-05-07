@@ -30,24 +30,6 @@ pub struct Cursor {
     pub idx: usize,
 }
 
-/// Structure for actions. Will be modified in the future.
-#[derive(PartialEq, Eq, Clone, Copy)]
-pub enum Action {
-    /// Default state.
-    None,
-    /// Successfully saved file.
-    Save,
-}
-
-impl fmt::Display for Action {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Action::None => write!(f, "none"),
-            Action::Save => write!(f, "save"),
-        }
-    }
-}
-
 /// Enum for the mode of the program. Directly affects the behaviour of the program.
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Mode {
@@ -141,7 +123,7 @@ pub struct Buffer {
     /// Filepath of the file currently being edited.
     pub filepath: String,
     /// Last action taken.
-    pub lastact: Action,
+    pub lastact: String,
     /// String to be found when using `M-n` and `M-p`.
     pub find_str: String,
     /// String to replace by when using `M-h`.
@@ -186,7 +168,7 @@ impl Buffer {
             top: 0,
             cursor_pos: Cursor { line: 0, idx: 0 },
             filepath: filepath.to_string(),
-            lastact: Action::None,
+            lastact: String::new(),
             find_str: String::new(),
             replace_str: String::new(),
             temp_str: String::new(),
@@ -276,7 +258,7 @@ impl Buffer {
             let mut writecontent = trimmedlines.join("\n");
             writecontent.push('\n');
             _ = fs::write(self.filepath.clone(), writecontent);
-            self.lastact = Action::Save;
+            self.lastact = String::from("save");
         }
     }
 
@@ -447,7 +429,7 @@ impl Buffer {
             linectr += 1;
         }
         let mut bottom_bar = format!(
-            "[{}] {}{}(act: {}) |{}| ({} fps) {}",
+            "[{}] {}{}(act: {}) [{}] ({} fps) {}",
             self.filepath,
             if self.find_str.is_empty() {
                 String::new()
