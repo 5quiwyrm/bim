@@ -1,7 +1,6 @@
 //! Support for tinylisp syntax highlighting.
 
 use crate::languages::{Language, StyledChar};
-use std::time::Instant;
 
 pub struct Tinylisp {}
 pub const TINYLISP: Tinylisp = Tinylisp {};
@@ -9,8 +8,7 @@ impl Language for Tinylisp {
     fn is_kind(&self, filepath: &str) -> bool {
         filepath.ends_with(".tlp")
     }
-    fn highlight(&self, buffer: &[String]) -> (Vec<Vec<StyledChar>>, u128) {
-        let start = Instant::now();
+    fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
         let mut ret_buf: Vec<Vec<StyledChar>> = vec![];
         for line in buffer {
             let mut push_buf = vec![];
@@ -59,7 +57,7 @@ impl Language for Tinylisp {
             });
             ret_buf.push(push_buf);
         }
-        (ret_buf, start.elapsed().as_micros())
+        ret_buf
     }
     fn indent_size(&self) -> usize {
         2

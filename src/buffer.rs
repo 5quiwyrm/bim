@@ -132,8 +132,8 @@ pub struct Buffer {
     pub contents: Vec<String>,
     /// Syntax highlighted contents. This is what is shown.
     pub highlighted_contents: Vec<Vec<languages::StyledChar>>,
-    /// Highlighting time taken.
-    pub highlighting_time: u128,
+    /// Time taken per iteration in microseconds.
+    pub iter_time: u128,
     /// Position of the cursor.
     pub cursor_pos: Cursor,
     /// Line number of the top line shown.
@@ -178,11 +178,11 @@ impl Buffer {
         } else {
             languages::get_lang(filepath)
         };
-        let (highlighted_contents, highlighting_time) = lang.highlight(&contents);
+        let highlighted_contents = lang.highlight(&contents);
         Buffer {
             contents: contents.clone(),
             highlighted_contents,
-            highlighting_time,
+            iter_time: 0,
             top: 0,
             cursor_pos: Cursor { line: 0, idx: 0 },
             filepath: filepath.to_string(),
@@ -200,7 +200,7 @@ impl Buffer {
     /// Updates highlighting. Performance cost varies. Call as infrequently as possible.
     #[inline]
     pub fn update_highlighting(&mut self) {
-        (self.highlighted_contents, self.highlighting_time) = self.lang.highlight(&self.contents);
+        self.highlighted_contents = self.lang.highlight(&self.contents);
     }
 
     /// Moves the cursor left, wrapping around lines.
@@ -396,7 +396,7 @@ impl Buffer {
 
         let mut linectr = self.top;
         while linectr < self.top + height - bottom_pad && linectr < content.len() {
-            tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m",linectr + 1).as_str());
+            tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
                 let mut line_content = content[self.cursor_pos.line].iter();
@@ -447,7 +447,7 @@ impl Buffer {
             linectr += 1;
         }
         let mut bottom_bar = format!(
-            "[{}] {}{}(act: {}) ({}: {} fps) {}",
+            "[{}] {}{}(act: {}) |{}| ({} fps) {}",
             self.filepath,
             if self.find_str.is_empty() {
                 String::new()
@@ -461,7 +461,7 @@ impl Buffer {
             },
             self.lastact,
             self.lang.display_str(),
-            style_time(self.highlighting_time),
+            style_time(self.iter_time),
             pretty_str_event(event),
         );
         let escape_code_size = 5;

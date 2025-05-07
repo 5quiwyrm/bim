@@ -10,6 +10,7 @@ use crossterm::{
 use std::{
     env::args,
     io::{self, Write},
+    time::Instant,
 };
 
 /// Returns matching brace for given open brace.
@@ -106,6 +107,7 @@ pub fn main() {
         let event = event::read().unwrap();
         if let Event::Key(key) = event {
             if key.kind != event::KeyEventKind::Release {
+                let start = Instant::now();
                 let mods = key.modifiers.iter();
                 let mut has_alt = false;
                 let mut has_ctrl = false;
@@ -168,7 +170,8 @@ pub fn main() {
                                 buf.mode = Mode::Default;
                             }
                             Mode::Copy => {
-                                let linenums: Vec<&str> = buf.temp_str.split(|c: char| c.is_whitespace()).collect();
+                                let linenums: Vec<&str> =
+                                    buf.temp_str.split(|c: char| c.is_whitespace()).collect();
                                 if linenums.len() == 2 {
                                     let from = linenums[0].parse::<usize>();
                                     if from.is_err() {
@@ -641,6 +644,11 @@ pub fn main() {
                         _ => {}
                     },
                     Mods::CtrlAlt => {}
+                }
+                let e = start.elapsed().as_micros();
+                if buf.iter_time < e {
+                    buf.iter_time += e;
+                    buf.iter_time >>= 1;
                 }
             }
         }

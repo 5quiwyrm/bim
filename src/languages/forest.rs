@@ -1,7 +1,6 @@
 //! Forest syntax highlighting support.
 
 use crate::languages::{Language, StyledChar};
-use std::time::Instant;
 
 pub struct Forest {}
 pub const FOREST: Forest = Forest {};
@@ -10,8 +9,7 @@ impl Language for Forest {
         filepath.ends_with(".frt")
     }
 
-    fn highlight(&self, buffer: &[String]) -> (Vec<Vec<StyledChar>>, u128) {
-        let start = Instant::now();
+    fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
         let mut ret_buf: Vec<Vec<StyledChar>> = vec![];
         let mut wrapped = false;
         let mut escaping = false;
@@ -55,7 +53,7 @@ impl Language for Forest {
             //println!("{}", push_buf.last().unwrap());
             ret_buf.push(push_buf);
         }
-        (ret_buf, start.elapsed().as_micros())
+        ret_buf
     }
 
     fn indent_size(&self) -> usize {

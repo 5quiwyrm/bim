@@ -7,7 +7,7 @@ pub trait Language {
     /// Detects whether a file should use this type of lighting based on file path.
     fn is_kind(&self, filepath: &str) -> bool;
     /// Highlights text from buffer. u128 represents microseconds spent highlighting.
-    fn highlight(&self, buffer: &[String]) -> (Vec<Vec<StyledChar>>, u128);
+    fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>>;
     /// Returns indent size used.
     fn indent_size(&self) -> usize;
     /// Converts to display string.
