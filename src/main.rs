@@ -655,6 +655,10 @@ pub fn main() {
                                 buf.update_highlighting();
                             }
                         }
+                        KeyCode::Char('G') => {
+                            buf.mode = Mode::Goto;
+                            buf.temp_str.clear();
+                        }
                         _ => {}
                     },
                     Mods::Ctrl => match key.code {
