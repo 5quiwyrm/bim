@@ -40,15 +40,8 @@ macro_rules! autopair {
     ($buffer: ident, $char: expr, $($open: expr, $close: expr);*) => {
         match $char { $(
             $open => {
-                if $buffer.contents[$buffer.cursor_pos.line]
-                    .chars()
-                    .nth($buffer.cursor_pos.idx)
-                    .unwrap_or(' ')
-                    .is_whitespace()
-                {
-                    $buffer.type_char($close);
-                    $buffer.move_left();
-                }
+                $buffer.type_char($close);
+                $buffer.move_left();
                 $buffer.indent_lvl += 1;
             }
             $close => {
