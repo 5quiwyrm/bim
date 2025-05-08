@@ -108,6 +108,20 @@ pub fn style_time(t: u128) -> String {
     }
 }
 
+pub enum BimVar {
+    Bool(bool),
+    Str(String),
+}
+
+impl fmt::Display for BimVar {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            BimVar::Bool(x) => write!(f, "{x}"),
+            BimVar::Str(x) => write!(f, "{x}"),
+        }
+    }
+}
+
 /// Structure for storing the current displayed buffer.
 pub struct Buffer {
     /// Contents of the file, as lines. This is what is modified.
@@ -120,12 +134,8 @@ pub struct Buffer {
     pub cursor_pos: Cursor,
     /// Line number of the top line shown.
     pub top: usize,
-    /// Decides whether or not to show line numbers.
-    pub showlinenos: bool,
     /// Filepath of the file currently being edited.
     pub filepath: String,
-    /// Last action taken.
-    pub lastact: String,
     /// String to be found when using `M-n` and `M-p`.
     pub find_str: String,
     /// String to replace by when using `M-h`.
@@ -138,6 +148,8 @@ pub struct Buffer {
     pub indent_lvl: usize,
     /// Current language. Used for determining indent size and highlighting.
     pub lang: Box<dyn languages::Language>,
+    /// Local vars.
+    pub vars: HashMap<String, BimVar>,
     /// Current mode.
     pub mode: Mode,
 }
@@ -162,16 +174,19 @@ impl Buffer {
         } else {
             languages::get_lang(filepath)
         };
+        let initvars = HashMap::from([
+            ("showlinenos".to_string(), BimVar::Bool(true)),
+            ("lastact".to_string(), BimVar::Str(String::new())),
+        ]);
         let highlighted_contents = lang.highlight(&contents);
         Buffer {
             contents: contents.clone(),
             highlighted_contents,
             iter_time: 0,
             top: 0,
-            showlinenos: true,
+            vars: initvars,
             cursor_pos: Cursor { line: 0, idx: 0 },
             filepath: filepath.to_string(),
-            lastact: String::new(),
             find_str: String::new(),
             replace_str: String::new(),
             temp_str: String::new(),
@@ -261,7 +276,10 @@ impl Buffer {
             let mut writecontent = trimmedlines.join("\n");
             writecontent.push('\n');
             _ = fs::write(self.filepath.clone(), writecontent);
-            self.lastact = String::from("save");
+            _ = self.vars.insert(
+                String::from("lastact"),
+                BimVar::Str(String::from("save"))
+            );
         }
     }
 
@@ -377,11 +395,14 @@ impl Buffer {
         }
         let numsize = sidesize - spaces;
 
-        let truewidth = if self.showlinenos {width - sidesize} else {width};
+        let showlinenos = matches!(self.vars.get("showlinenos"), Some(BimVar::Bool(true)));
+        let truewidth = if showlinenos {width - sidesize} else {width};
 
         let mut linectr = self.top;
         while linectr < self.top + height - bottom_pad && linectr < content.len() {
-            if self.showlinenos {tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());}
+            if showlinenos {
+                tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+            }
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
                 let mut line_content = content[self.cursor_pos.line].iter();
@@ -444,7 +465,7 @@ impl Buffer {
             } else {
                 format!("(-> {:?}) ", self.replace_str)
             },
-            self.lastact,
+            self.vars.get("lastact").unwrap(),
             self.lang.display_str(),
             style_time(self.iter_time),
             pretty_str_event(event),
