@@ -174,41 +174,41 @@ pub fn main() {
                                     if linenums.len() == 2 {
                                         let from = linenums[0].parse::<usize>();
                                         if from.is_err() {
-                                    _ = buf.vars.insert(
-                                        String::from("lastact"),
-                                        BimVar::Str(String::from("Inval from")),
-                                    );
+                                            _ = buf.vars.insert(
+                                                String::from("lastact"),
+                                                BimVar::Str(String::from("Inval from")),
+                                            );
                                             break 'cpy;
                                         }
                                         let f = from.unwrap();
                                         if f > buf.contents.len() {
-                                    _ = buf.vars.insert(
-                                        String::from("lastact"),
-                                        BimVar::Str(String::from("Inval from")),
-                                    );
+                                            _ = buf.vars.insert(
+                                                String::from("lastact"),
+                                                BimVar::Str(String::from("Inval from")),
+                                            );
                                             break 'cpy;
                                         }
                                         let to = linenums[1].parse::<usize>();
                                         if to.is_err() {
-                                    _ = buf.vars.insert(
-                                        String::from("lastact"),
-                                        BimVar::Str(String::from("Inval to")),
-                                    );
+                                            _ = buf.vars.insert(
+                                                String::from("lastact"),
+                                                BimVar::Str(String::from("Inval to")),
+                                            );
                                             break 'cpy;
                                         }
                                         let t = to.unwrap();
                                         if t > buf.contents.len() {
-                                    _ = buf.vars.insert(
-                                        String::from("lastact"),
-                                        BimVar::Str(String::from("Inval to")),
-                                    );
+                                            _ = buf.vars.insert(
+                                                String::from("lastact"),
+                                                BimVar::Str(String::from("Inval to")),
+                                            );
                                             break 'cpy;
                                         }
                                         if f >= t || f == 0 {
-                                    _ = buf.vars.insert(
-                                        String::from("lastact"),
-                                        BimVar::Str(String::from("assert: f < t")),
-                                    );
+                                            _ = buf.vars.insert(
+                                                String::from("lastact"),
+                                                BimVar::Str(String::from("assert: f < t")),
+                                            );
                                             break 'cpy;
                                         }
 
@@ -221,10 +221,13 @@ pub fn main() {
                                         });
                                         buf.update_highlighting();
                                     } else {
-                                    _ = buf.vars.insert(
-                                        String::from("lastact"),
-                                        BimVar::Str(format!("{} args given, 2 expected", linenums.len())),
-                                    );
+                                        _ = buf.vars.insert(
+                                            String::from("lastact"),
+                                            BimVar::Str(format!(
+                                                "{} args given, 2 expected",
+                                                linenums.len()
+                                            )),
+                                        );
                                     }
                                 }
                                 buf.temp_str.clear();
@@ -363,7 +366,10 @@ pub fn main() {
                             } else {
                                 buf.cursor_pos.line = 0;
                             }
-                            buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                            let linelen = buf.contents[buf.cursor_pos.line].len();
+                            if buf.cursor_pos.idx > linelen {
+                                buf.cursor_pos.idx = linelen;
+                            };
                         }
                         KeyCode::Char('d') => {
                             if buf.cursor_pos.line + height >= buf.contents.len() {
@@ -374,7 +380,10 @@ pub fn main() {
                             } else {
                                 buf.cursor_pos.line += height;
                             }
-                            buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                            let linelen = buf.contents[buf.cursor_pos.line].len();
+                            if buf.cursor_pos.idx > linelen {
+                                buf.cursor_pos.idx = linelen;
+                            };
                         }
                         KeyCode::Char('l') => {
                             if buf.contents.len() != 1 {
@@ -622,14 +631,13 @@ pub fn main() {
                             buf.move_down();
                         }
                         KeyCode::Char('Y') => {
-                            if buf.mode == Mode::Copy {
-                                let numbuf = format!("{} ", buf.cursor_pos.line + 1);
-                                for c in numbuf.chars() {
-                                    buf.temp_str.push(c);
-                                }
-                            } else {
+                            if buf.mode != Mode::Copy {
                                 buf.mode = Mode::Copy;
                                 buf.temp_str.clear();
+                            }
+                            let numbuf = format!("{} ", buf.cursor_pos.line + 1);
+                            for c in numbuf.chars() {
+                                buf.temp_str.push(c);
                             }
                         }
                         KeyCode::Char('A') => {
@@ -696,7 +704,7 @@ pub fn main() {
                             }
                         }
                         _ => {}
-                    }
+                    },
                 }
                 let e = start.elapsed().as_micros();
                 buf.iter_time += e;

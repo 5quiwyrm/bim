@@ -276,10 +276,9 @@ impl Buffer {
             let mut writecontent = trimmedlines.join("\n");
             writecontent.push('\n');
             _ = fs::write(self.filepath.clone(), writecontent);
-            _ = self.vars.insert(
-                String::from("lastact"),
-                BimVar::Str(String::from("save"))
-            );
+            _ = self
+                .vars
+                .insert(String::from("lastact"), BimVar::Str(String::from("save")));
         }
     }
 
@@ -396,15 +395,18 @@ impl Buffer {
         let numsize = sidesize - spaces;
 
         let showlinenos = matches!(self.vars.get("showlinenos"), Some(BimVar::Bool(true)));
-        let truewidth = if showlinenos {width - sidesize} else {width};
+        let truewidth = if showlinenos { width - sidesize } else { width };
 
         let mut linectr = self.top;
         while linectr < self.top + height - bottom_pad && linectr < content.len() {
             if showlinenos {
                 if linectr == self.cursor_pos.line {
-                    tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+                    tb_printed
+                        .push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
                 } else {
-                    tb_printed.push_str(format!("\x1b[2m\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+                    tb_printed.push_str(
+                        format!("\x1b[2m\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str(),
+                    );
                 }
             }
             if linectr == self.cursor_pos.line {
