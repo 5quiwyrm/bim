@@ -629,8 +629,15 @@ pub fn main() {
                             buf.move_down();
                         }
                         KeyCode::Char('Y') => {
-                            buf.mode = Mode::Copy;
-                            buf.temp_str.clear();
+                            if buf.mode == Mode::Copy {
+                                let numbuf = format!("{} ", buf.cursor_pos.line + 1);
+                                for c in numbuf.chars() {
+                                    buf.temp_str.push(c);
+                                }
+                            } else {
+                                buf.mode = Mode::Copy;
+                                buf.temp_str.clear();
+                            }
                         }
                         KeyCode::Char('A') => {
                             if buf.cursor_pos.line + 1 < buf.contents.len() {
@@ -646,14 +653,6 @@ pub fn main() {
                                     .swap(buf.cursor_pos.line, buf.cursor_pos.line - 1);
                                 buf.move_up();
                                 buf.update_highlighting();
-                            }
-                        }
-                        KeyCode::Char('L') => {
-                            if buf.mode.show_temp() {
-                                let numbuf = format!("{} ", buf.cursor_pos.line + 1);
-                                for c in numbuf.chars() {
-                                    buf.temp_str.push(c);
-                                }
                             }
                         }
                         _ => {}
