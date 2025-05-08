@@ -670,7 +670,12 @@ pub fn main() {
                         }
                         _ => {}
                     },
-                    Mods::CtrlAlt => {}
+                    Mods::CtrlAlt => match key.code {
+                        KeyCode::Char('L') => {
+                            buf.showlinenos = !buf.showlinenos;
+                        }
+                        _ => {}
+                    }
                 }
                 let e = start.elapsed().as_micros();
                 buf.iter_time += e;

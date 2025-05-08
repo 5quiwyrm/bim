@@ -120,6 +120,8 @@ pub struct Buffer {
     pub cursor_pos: Cursor,
     /// Line number of the top line shown.
     pub top: usize,
+    /// Decides whether or not to show line numbers.
+    pub showlinenos: bool,
     /// Filepath of the file currently being edited.
     pub filepath: String,
     /// Last action taken.
@@ -166,6 +168,7 @@ impl Buffer {
             highlighted_contents,
             iter_time: 0,
             top: 0,
+            showlinenos: true,
             cursor_pos: Cursor { line: 0, idx: 0 },
             filepath: filepath.to_string(),
             lastact: String::new(),
@@ -374,11 +377,11 @@ impl Buffer {
         }
         let numsize = sidesize - spaces;
 
-        let truewidth = width - sidesize;
+        let truewidth = if self.showlinenos {width - sidesize} else {width};
 
         let mut linectr = self.top;
         while linectr < self.top + height - bottom_pad && linectr < content.len() {
-            tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+            if self.showlinenos {tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());}
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
                 let mut line_content = content[self.cursor_pos.line].iter();
