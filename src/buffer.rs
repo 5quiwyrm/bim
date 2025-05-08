@@ -401,7 +401,11 @@ impl Buffer {
         let mut linectr = self.top;
         while linectr < self.top + height - bottom_pad && linectr < content.len() {
             if showlinenos {
-                tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+                if linectr == self.cursor_pos.line {
+                    tb_printed.push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+                } else {
+                    tb_printed.push_str(format!("\x1b[2m\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+                }
             }
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
