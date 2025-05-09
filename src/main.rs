@@ -204,10 +204,10 @@ pub fn main() {
                                             );
                                             break 'cpy;
                                         }
-                                        if f >= t || f == 0 {
+                                        if f > t || f == 0 {
                                             _ = buf.vars.insert(
                                                 String::from("lastact"),
-                                                BimVar::Str(String::from("assert: f < t")),
+                                                BimVar::Str(String::from("assert: f <= t")),
                                             );
                                             break 'cpy;
                                         }
