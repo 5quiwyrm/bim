@@ -86,9 +86,13 @@ impl Mods {
 
 pub fn main() {
     let mut stdout = io::stdout();
-    let mut args = args();
+    let mut args = args().peekable();
     _ = args.next();
-    let path = args.next().unwrap_or("scratch".to_string());
+    let path = if args.peek().is_some() {
+        args.collect::<Vec<String>>().join(" ")
+    } else {
+        String::from("scratch")
+    };
     let mut buf = Buffer::new(&path);
     print!("\x1bc");
     _ = terminal::enable_raw_mode();
