@@ -98,13 +98,13 @@ pub fn main() {
     _ = terminal::enable_raw_mode();
     buf.save();
     'ed: loop {
-        let (widthu, heightu) = terminal::size().unwrap();
+        let (widthu, heightu) = terminal::size().expect("terminal should have size");
         let _width = widthu as usize;
         let height = heightu as usize;
-        let event = event::read().unwrap();
+        let event = event::read().expect("there should be an event upon reading");
+        let start = Instant::now();
         if let Event::Key(key) = event {
             if key.kind != event::KeyEventKind::Release {
-                let start = Instant::now();
                 let mods = key.modifiers.iter();
                 let mut has_alt = false;
                 let mut has_ctrl = false;
@@ -176,38 +176,26 @@ pub fn main() {
                                     let linenums: Vec<&str> =
                                         buf.temp_str.split_whitespace().collect();
                                     if linenums.len() == 2 {
-                                        let from = linenums[0].parse::<usize>();
-                                        if from.is_err() {
-                                            _ = buf.vars.insert(
-                                                String::from("lastact"),
-                                                BimVar::Str(String::from("Inval from")),
-                                            );
-                                            break 'cpy;
-                                        }
-                                        let f = from.unwrap();
-                                        if f > buf.contents.len() {
-                                            _ = buf.vars.insert(
-                                                String::from("lastact"),
-                                                BimVar::Str(String::from("Inval from")),
-                                            );
-                                            break 'cpy;
-                                        }
-                                        let to = linenums[1].parse::<usize>();
-                                        if to.is_err() {
-                                            _ = buf.vars.insert(
-                                                String::from("lastact"),
-                                                BimVar::Str(String::from("Inval to")),
-                                            );
-                                            break 'cpy;
-                                        }
-                                        let t = to.unwrap();
-                                        if t > buf.contents.len() {
-                                            _ = buf.vars.insert(
-                                                String::from("lastact"),
-                                                BimVar::Str(String::from("Inval to")),
-                                            );
-                                            break 'cpy;
-                                        }
+                                        let f = match linenums[0].parse::<usize>() {
+                                            Ok(o) if o <= buf.contents.len() => o,
+                                            _ => {
+                                                _ = buf.vars.insert(
+                                                    String::from("lastact"),
+                                                    BimVar::Str(String::from("Inval from")),
+                                                );
+                                                break 'cpy;
+                                            }
+                                        };
+                                        let t = match linenums[1].parse::<usize>() {
+                                            Ok(o) if o <= buf.contents.len() => o,
+                                            _ => {
+                                                _ = buf.vars.insert(
+                                                    String::from("lastact"),
+                                                    BimVar::Str(String::from("Inval to")),
+                                                );
+                                                break 'cpy;
+                                            }
+                                        };
                                         if f > t || f == 0 {
                                             _ = buf.vars.insert(
                                                 String::from("lastact"),
@@ -710,13 +698,13 @@ pub fn main() {
                         _ => {}
                     },
                 }
-                let e = start.elapsed().as_micros();
-                buf.iter_time += e;
-                buf.iter_time >>= 1;
             }
         }
         buf.print(&event);
         stdout.flush().unwrap();
+        let e = start.elapsed().as_micros();
+        buf.iter_time += e;
+        buf.iter_time >>= 1;
     }
     print!("\x1bc");
     buf.save();
