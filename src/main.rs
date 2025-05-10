@@ -23,6 +23,10 @@ pub fn get_matching_brace(ch: char) -> char {
     }
 }
 
+pub fn is_close_bracket(ch: char) -> bool {
+    matches!(ch, ')' | ']' | '}')
+}
+
 /** Generates match statement to support autopairs.
 The macro takes the form of:
 ```
@@ -40,9 +44,16 @@ macro_rules! autopair {
     ($buffer: ident, $char: expr, $($open: expr, $close: expr);*) => {
         match $char { $(
             $open => {
-                $buffer.type_char($close);
-                $buffer.move_left();
-                $buffer.indent_lvl += 1;
+                let c = $buffer
+                        .contents[$buffer.cursor_pos.line]
+                        .chars()
+                        .nth($buffer.cursor_pos.idx)
+                        .unwrap_or(' ');
+                if c.is_whitespace() || is_close_bracket(c) {
+                    $buffer.type_char($close);
+                    $buffer.move_left();
+                    $buffer.indent_lvl += 1;
+                }
             }
             $close => {
                 if $buffer.contents[$buffer.cursor_pos.line].chars().nth($buffer.cursor_pos.idx) == Some($close) {
