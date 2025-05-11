@@ -43,8 +43,8 @@ impl Language for Tinylisp {
                 let style = (match s.trim() {
                     "+" | "-" | "*" | "/" | "=" | ">" | "<" => "\x1b[36m",
                     "str" => "\x1b[31m",
-                    "car" | "cdr" | "quote" | "exec" => "\x1b[35m",
-                    "cond" | "and" | "or" | "not" => "\x1b[1;34m",
+                    "car" | "cdr" | "cons" | "quote" | "eval" => "\x1b[35m",
+                    "if" | "and" | "or" | "not" => "\x1b[1;34m",
                     "def" | "defn" | "defmacro" => "\x1b[33m",
                     t if t.chars().nth(0) == Some('\"') => "\x1b[32m",
                     u if u.chars().all(|c| c.is_numeric()) => "\x1b[1;34m",

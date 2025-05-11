@@ -396,6 +396,11 @@ pub fn main() {
                                 buf.contents[0].clear();
                                 buf.cursor_pos.idx = 0;
                             }
+                            let contentlen = buf.contents.len();
+                            if buf.cursor_pos.line >= contentlen &&
+                                !buf.contents.is_empty() {
+                                buf.cursor_pos.line = contentlen - 1;
+                            }
                             buf.update_highlighting();
                         }
                         KeyCode::Char(',') => {
