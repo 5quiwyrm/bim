@@ -49,10 +49,10 @@ macro_rules! autopair {
                         .chars()
                         .nth($buffer.cursor_pos.idx)
                         .unwrap_or(' ');
+                $buffer.indent_lvl += 1;
                 if c.is_whitespace() || is_close_bracket(c) {
                     $buffer.type_char($close);
                     $buffer.move_left();
-                    $buffer.indent_lvl += 1;
                 }
             }
             $close => {
@@ -577,17 +577,7 @@ pub fn main() {
                                     break;
                                 }
                             }
-                            while buf.contents[buf.cursor_pos.line]
-                                .chars()
-                                .nth(buf.cursor_pos.idx)
-                                .unwrap_or(' ')
-                                .is_alphanumeric()
-                            {
-                                if !buf.move_right() {
-                                    break;
-                                }
-                            }
-                            while buf.contents[buf.cursor_pos.line]
+                            while !buf.contents[buf.cursor_pos.line]
                                 .chars()
                                 .nth(buf.cursor_pos.idx)
                                 .unwrap_or(' ')
@@ -597,6 +587,7 @@ pub fn main() {
                                     break;
                                 }
                             }
+                            buf.move_right();
                         }
                         KeyCode::Char('W') => {
                             while buf.contents[buf.cursor_pos.line]
@@ -609,17 +600,7 @@ pub fn main() {
                                     break;
                                 }
                             }
-                            while buf.contents[buf.cursor_pos.line]
-                                .chars()
-                                .nth(buf.cursor_pos.idx)
-                                .unwrap_or(' ')
-                                .is_alphanumeric()
-                            {
-                                if !buf.move_left() {
-                                    break;
-                                }
-                            }
-                            while buf.contents[buf.cursor_pos.line]
+                            while !buf.contents[buf.cursor_pos.line]
                                 .chars()
                                 .nth(buf.cursor_pos.idx)
                                 .unwrap_or(' ')
@@ -629,6 +610,7 @@ pub fn main() {
                                     break;
                                 }
                             }
+                            buf.move_left();
                         }
                         KeyCode::Char('y') => {
                             buf.contents.insert(
