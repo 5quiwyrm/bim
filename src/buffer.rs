@@ -1,6 +1,7 @@
 //! Buffer and cursor handling module.
 
 use crate::languages;
+use crate::snippets;
 use crossterm::{event, terminal};
 use std::{
     collections::HashMap,
@@ -49,6 +50,8 @@ pub enum Mode {
     OpenFile,
     /// Copy mode.
     Copy,
+    /// Snippet mode.
+    Snippet,
     /// Mode switching mode.
     Switch,
 }
@@ -66,6 +69,7 @@ impl Mode {
             "switch" | "s" => Mode::Switch,
             "open" | "o" | "openfile" => Mode::OpenFile,
             "copy" | "c" => Mode::Copy,
+            "snippet" | "sn" => Mode::Snippet,
             _ => Mode::Default,
         }
     }
@@ -82,6 +86,7 @@ impl fmt::Display for Mode {
             Mode::Goto => write!(f, "goto"),
             Mode::OpenFile => write!(f, "open file"),
             Mode::Copy => write!(f, "copying (from -> to)"),
+            Mode::Snippet => write!(f, "snippet request"),
             Mode::Switch => write!(f, "switch to mode"),
         }
     }
@@ -93,7 +98,7 @@ impl Mode {
         use Mode::*;
         match self {
             Default | Paste | Replace | Find | ReplaceStr => false,
-            Goto | Switch | OpenFile | Copy => true,
+            Goto | Switch | OpenFile | Copy | Snippet => true,
         }
     }
 }
@@ -148,6 +153,8 @@ pub struct Buffer {
     pub indent_lvl: usize,
     /// Current language. Used for determining indent size and highlighting.
     pub lang: Box<dyn languages::Language>,
+    /// Current snippets used.
+    pub snippets: Box<dyn snippets::Snippet>,
     /// Local vars.
     pub vars: HashMap<String, BimVar>,
     /// Current mode.
@@ -174,6 +181,11 @@ impl Buffer {
         } else {
             languages::get_lang(filepath)
         };
+        let snippets = if contents[0].contains("use-ext:") {
+            snippets::get_snippets(&contents[0])
+        } else {
+            snippets::get_snippets(filepath)
+        };
         let initvars = HashMap::from([
             ("showlinenos".to_string(), BimVar::Bool(true)),
             ("lastact".to_string(), BimVar::Str(String::new())),
@@ -193,6 +205,7 @@ impl Buffer {
             marklist: HashMap::new(),
             indent_lvl: 0,
             lang,
+            snippets,
             mode: Mode::Default,
         }
     }
@@ -201,6 +214,18 @@ impl Buffer {
     #[inline]
     pub fn update_highlighting(&mut self) {
         self.highlighted_contents = self.lang.highlight(&self.contents);
+    }
+
+    #[inline]
+    pub fn adjust_indent(&mut self) {
+        let mut original = String::new();
+        for _ in 0..self.indent_lvl * self.lang.indent_size() {
+            original.push(' ');
+        }
+        original.push_str(self.contents[self.cursor_pos.line].trim());
+        self.contents[self.cursor_pos.line] = original;
+        self.cursor_pos.idx = self.indent_lvl * self.lang.indent_size();
+        self.update_highlighting();
     }
 
     /// Moves the cursor left, wrapping around lines.
@@ -363,6 +388,11 @@ impl Buffer {
         } else {
             languages::get_lang(&self.filepath)
         };
+        self.snippets = if self.contents[0].contains("use-ext:") {
+            snippets::get_snippets(&self.contents[0])
+        } else {
+            snippets::get_snippets(&self.filepath)
+        };
         self.update_highlighting();
     }
 
@@ -459,7 +489,7 @@ impl Buffer {
             linectr += 1;
         }
         let mut bottom_bar = format!(
-            "[{}] {}{}(act: {}) [{}] ({} fps) {}",
+            "[{}] {}{}(act: {}) [{}; {}] ({} fps) {}",
             self.filepath,
             if self.find_str.is_empty() {
                 String::new()
@@ -473,6 +503,7 @@ impl Buffer {
             },
             self.vars.get("lastact").unwrap(),
             self.lang.display_str(),
+            self.snippets.display_str(),
             style_time(self.iter_time),
             pretty_str_event(event),
         );

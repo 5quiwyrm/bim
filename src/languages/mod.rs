@@ -4,7 +4,7 @@ use std::fmt;
 
 /// Trait for supporting indenting and highlighting.
 pub trait Language {
-    /// Detects whether a file should use this type of lighting based on file path.
+    /// Detects whether a file should use this type of highlighting based on file path.
     fn is_kind(&self, filepath: &str) -> bool;
     /// Highlights text from buffer. u128 represents microseconds spent highlighting.
     fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>>;
@@ -74,6 +74,9 @@ use tinylisp::*;
 pub mod haskell;
 use haskell::*;
 
+pub mod todo;
+use todo::*;
+
 // Update get_lang if you added a new language
 
 pub fn get_lang(path: &str) -> Box<dyn Language> {
@@ -87,6 +90,8 @@ pub fn get_lang(path: &str) -> Box<dyn Language> {
         Box::new(TINYLISP)
     } else if HASKELL.is_kind(path) {
         Box::new(HASKELL)
+    } else if TODO.is_kind(path) {
+        Box::new(TODO)
     } else {
         Box::new(TEXT)
     }

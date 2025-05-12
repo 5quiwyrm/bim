@@ -1,0 +1,33 @@
+//! Support for for my personal todo doc format.
+
+use crate::languages::{Language, StyledChar};
+
+pub struct Todo {}
+pub const TODO: Todo = Todo {};
+impl Language for Todo {
+    fn is_kind(&self, filepath: &str) -> bool {
+        filepath.ends_with(".todo")
+    }
+    fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
+        buffer.iter().map(|l| StyledChar::colour_string(
+            l,
+            (if l.len() > 4 {
+                match &l[0..4] {
+                    "[ ] " => "\x1b[33m",
+                    "[ ]!" => "\x1b[31m",
+                    "[V] " => "\x1b[32m",
+                    "[V]!" => "\x1b[32m",
+                    _ => "\x1b[2m",
+                }
+            } else {
+                "\x1b[2m"
+            }).to_string())
+        ).collect()
+    }
+    fn indent_size(&self) -> usize {
+        2
+    }
+    fn display_str(&self) -> &str {
+        "Ssorgn't"
+    }
+}

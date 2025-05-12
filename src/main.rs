@@ -1,6 +1,7 @@
 pub mod buffer;
 use buffer::*;
 pub mod languages;
+pub mod snippets;
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyModifiers},
@@ -248,6 +249,14 @@ pub fn main() {
                                     buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
                             }
+                            Mode::Snippet => {
+                                let sniplines = buf.snippets.query(&buf.temp_str);
+                                for (i, l) in sniplines.iter().enumerate() {
+                                    buf.contents.insert(buf.cursor_pos.line + i + 1, l.to_string());
+                                }
+                                buf.update_highlighting();
+                                buf.mode = Mode::Default;
+                            }
                             _ => {
                                 if let Some('}' | ']' | ')') = buf.contents[buf.cursor_pos.line]
                                     .chars()
@@ -410,6 +419,19 @@ pub fn main() {
                         }
                         KeyCode::Char('.') => {
                             buf.indent_lvl += 1;
+                        }
+                        KeyCode::Char('I') => {
+                            buf.adjust_indent();
+                        }
+                        KeyCode::Char('<') => {
+                            if buf.indent_lvl != 0 {
+                                buf.indent_lvl -= 1;
+                            }
+                            buf.adjust_indent();
+                        }
+                        KeyCode::Char('>') => {
+                            buf.indent_lvl += 1;
+                            buf.adjust_indent();
                         }
                         KeyCode::Char(';') => {
                             let mut currline = buf.contents[buf.cursor_pos.line].chars();
@@ -648,6 +670,10 @@ pub fn main() {
                         }
                         KeyCode::Char('G') => {
                             buf.mode = Mode::Goto;
+                            buf.temp_str.clear();
+                        }
+                        KeyCode::Char('S') => {
+                            buf.mode = Mode::Snippet;
                             buf.temp_str.clear();
                         }
                         _ => {}
