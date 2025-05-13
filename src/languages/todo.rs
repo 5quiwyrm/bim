@@ -11,8 +11,8 @@ impl Language for Todo {
     fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
         buffer.iter().map(|l| StyledChar::colour_string(
             l,
-            (if l.len() > 4 {
-                match &l[0..4] {
+            (if l.trim().len() > 4 {
+                match &(l.trim())[0..4] {
                     "[ ] " => "\x1b[33m",
                     "[ ]!" => "\x1b[31m",
                     "[V] " => "\x1b[32m",

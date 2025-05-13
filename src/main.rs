@@ -252,7 +252,12 @@ pub fn main() {
                             Mode::Snippet => {
                                 let sniplines = buf.snippets.query(&buf.temp_str);
                                 for (i, l) in sniplines.iter().enumerate() {
-                                    buf.contents.insert(buf.cursor_pos.line + i + 1, l.to_string());
+                                    let mut ins_line = String::new();
+                                    for _ in 0..buf.lang.indent_size() * buf.indent_lvl {
+                                        ins_line.push(' ');
+                                    }
+                                    ins_line.push_str(l);
+                                    buf.contents.insert(buf.cursor_pos.line + i + 1, ins_line);
                                 }
                                 buf.update_highlighting();
                                 buf.mode = Mode::Default;
@@ -422,15 +427,23 @@ pub fn main() {
                         }
                         KeyCode::Char('I') => {
                             buf.adjust_indent();
+                            if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                            }
                         }
                         KeyCode::Char('<') => {
                             if buf.indent_lvl != 0 {
                                 buf.indent_lvl -= 1;
+                                let indent_size = buf.lang.indent_size();
+                                if buf.cursor_pos.idx >= indent_size {
+                                    buf.cursor_pos.idx -= indent_size;
+                                }
                             }
                             buf.adjust_indent();
                         }
                         KeyCode::Char('>') => {
                             buf.indent_lvl += 1;
+                            buf.cursor_pos.idx += buf.lang.indent_size();
                             buf.adjust_indent();
                         }
                         KeyCode::Char(';') => {
@@ -675,6 +688,33 @@ pub fn main() {
                         KeyCode::Char('S') => {
                             buf.mode = Mode::Snippet;
                             buf.temp_str.clear();
+                        }
+                        KeyCode::Char('[') => {
+                            while buf.cursor_pos.line != 0 &&
+                                buf.contents[buf.cursor_pos.line].is_empty() {
+                                buf.cursor_pos.line -= 1;
+                            }
+                            while buf.cursor_pos.line != 0 &&
+                                !buf.contents[buf.cursor_pos.line].is_empty() {
+                                buf.cursor_pos.line -= 1;
+                            }
+                            if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len()
+                            }
+                        }
+                        KeyCode::Char(']') => {
+                            let content_len = buf.contents.len();
+                            while buf.cursor_pos.line + 1 < content_len &&
+                                !buf.contents[buf.cursor_pos.line].is_empty() {
+                                buf.cursor_pos.line += 1;
+                            }
+                            while buf.cursor_pos.line + 1 < content_len &&
+                                buf.contents[buf.cursor_pos.line].is_empty() {
+                                buf.cursor_pos.line += 1;
+                            }
+                            if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len()
+                            }
                         }
                         _ => {}
                     },

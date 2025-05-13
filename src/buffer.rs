@@ -224,7 +224,6 @@ impl Buffer {
         }
         original.push_str(self.contents[self.cursor_pos.line].trim());
         self.contents[self.cursor_pos.line] = original;
-        self.cursor_pos.idx = self.indent_lvl * self.lang.indent_size();
         self.update_highlighting();
     }
 
