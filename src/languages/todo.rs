@@ -9,20 +9,26 @@ impl Language for Todo {
         filepath.ends_with(".todo")
     }
     fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
-        buffer.iter().map(|l| StyledChar::colour_string(
-            l,
-            (if l.trim().len() > 4 {
-                match &(l.trim())[0..4] {
-                    "[ ] " => "\x1b[33m",
-                    "[ ]!" => "\x1b[31m",
-                    "[V] " => "\x1b[32m",
-                    "[V]!" => "\x1b[32m",
-                    _ => "\x1b[2m",
-                }
-            } else {
-                "\x1b[2m"
-            }).to_string())
-        ).collect()
+        buffer
+            .iter()
+            .map(|l| {
+                StyledChar::colour_string(
+                    l,
+                    (if l.trim().len() > 4 {
+                        match &(l.trim())[0..4] {
+                            "[ ] " => "\x1b[33m",
+                            "[ ]!" => "\x1b[31m",
+                            "[V] " => "\x1b[32m",
+                            "[V]!" => "\x1b[32m",
+                            _ => "\x1b[2m",
+                        }
+                    } else {
+                        "\x1b[2m"
+                    })
+                    .to_string(),
+                )
+            })
+            .collect()
     }
     fn indent_size(&self) -> usize {
         2

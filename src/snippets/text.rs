@@ -1,6 +1,6 @@
 //! Default snippets
 
-use crate::snippets::{Snippet};
+use crate::snippets::Snippet;
 
 pub struct Text {}
 pub const TEXT: Text = Text {};

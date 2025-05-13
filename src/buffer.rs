@@ -189,6 +189,7 @@ impl Buffer {
         let initvars = HashMap::from([
             ("showlinenos".to_string(), BimVar::Bool(true)),
             ("lastact".to_string(), BimVar::Str(String::new())),
+            ("showbottombar".to_string(), BimVar::Bool(true)),
         ]);
         let highlighted_contents = lang.highlight(&contents);
         Buffer {
@@ -402,8 +403,11 @@ impl Buffer {
         // the width calculations are wrong on posix
         // uncomment the next line on posix:
         // width -= 1;
+
+        let showbottombar = matches!(self.vars.get("showbottombar"), Some(BimVar::Bool(true)));
+
         let height = heightu as usize;
-        let bottom_pad = 2;
+        let bottom_pad = if showbottombar { 2 } else { 0 };
         if self.cursor_pos.line > self.top + height - bottom_pad - 3 {
             self.top = self.cursor_pos.line + bottom_pad + 3 - height;
         }
@@ -487,47 +491,51 @@ impl Buffer {
             }
             linectr += 1;
         }
-        let mut bottom_bar = format!(
-            "[{}] {}{}(act: {}) [{}; {}] ({} fps) {}",
-            self.filepath,
-            if self.find_str.is_empty() {
-                String::new()
-            } else {
-                format!("(?: {:?}) ", self.find_str)
-            },
-            if self.replace_str.is_empty() {
-                String::new()
-            } else {
-                format!("(-> {:?}) ", self.replace_str)
-            },
-            self.vars.get("lastact").unwrap(),
-            self.lang.display_str(),
-            self.snippets.display_str(),
-            style_time(self.iter_time),
-            pretty_str_event(event),
-        );
-        let escape_code_size = 5;
-        if bottom_bar.len() > width + escape_code_size {
-            bottom_bar.truncate(width + escape_code_size);
-        }
-        tb_printed.push_str(format!("{bottom_bar: <width$}\x1b[0m").as_str());
-        tb_printed.push('\n');
-        tb_printed.push_str(
-            format!(
-                "{: <width$}",
-                format!(
-                    "{}{}",
-                    self.mode,
-                    if self.mode.show_temp() {
-                        format!(": {}", self.temp_str)
-                    } else {
-                        String::new()
-                    }
-                )
-            )
-            .as_str(),
-        );
 
+        if showbottombar {
+            let mut bottom_bar = format!(
+                "[{}] {}{}(act: {}) [{}; {}] ({} fps) {}",
+                self.filepath,
+                if self.find_str.is_empty() {
+                    String::new()
+                } else {
+                    format!("(?: {:?}) ", self.find_str)
+                },
+                if self.replace_str.is_empty() {
+                    String::new()
+                } else {
+                    format!("(-> {:?}) ", self.replace_str)
+                },
+                self.vars.get("lastact").unwrap(),
+                self.lang.display_str(),
+                self.snippets.display_str(),
+                style_time(self.iter_time),
+                pretty_str_event(event),
+            );
+            let escape_code_size = 5;
+            if bottom_bar.len() > width + escape_code_size {
+                bottom_bar.truncate(width + escape_code_size);
+            }
+            tb_printed.push_str(format!("{bottom_bar: <width$}\x1b[0m").as_str());
+            tb_printed.push('\n');
+            tb_printed.push_str(
+                format!(
+                    "{: <width$}",
+                    format!(
+                        "{}{}",
+                        self.mode,
+                        if self.mode.show_temp() {
+                            format!(": {}", self.temp_str)
+                        } else {
+                            String::new()
+                        }
+                    )
+                )
+                .as_str(),
+            );
+        } else {
+            tb_printed.pop();
+        }
         print!("{tb_printed}");
     }
 }

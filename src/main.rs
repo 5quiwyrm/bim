@@ -411,8 +411,7 @@ pub fn main() {
                                 buf.cursor_pos.idx = 0;
                             }
                             let contentlen = buf.contents.len();
-                            if buf.cursor_pos.line >= contentlen &&
-                                !buf.contents.is_empty() {
+                            if buf.cursor_pos.line >= contentlen && !buf.contents.is_empty() {
                                 buf.cursor_pos.line = contentlen - 1;
                             }
                             buf.update_highlighting();
@@ -690,12 +689,14 @@ pub fn main() {
                             buf.temp_str.clear();
                         }
                         KeyCode::Char('[') => {
-                            while buf.cursor_pos.line != 0 &&
-                                buf.contents[buf.cursor_pos.line].is_empty() {
+                            while buf.cursor_pos.line != 0
+                                && buf.contents[buf.cursor_pos.line].is_empty()
+                            {
                                 buf.cursor_pos.line -= 1;
                             }
-                            while buf.cursor_pos.line != 0 &&
-                                !buf.contents[buf.cursor_pos.line].is_empty() {
+                            while buf.cursor_pos.line != 0
+                                && !buf.contents[buf.cursor_pos.line].is_empty()
+                            {
                                 buf.cursor_pos.line -= 1;
                             }
                             if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
@@ -704,12 +705,14 @@ pub fn main() {
                         }
                         KeyCode::Char(']') => {
                             let content_len = buf.contents.len();
-                            while buf.cursor_pos.line + 1 < content_len &&
-                                !buf.contents[buf.cursor_pos.line].is_empty() {
+                            while buf.cursor_pos.line + 1 < content_len
+                                && !buf.contents[buf.cursor_pos.line].is_empty()
+                            {
                                 buf.cursor_pos.line += 1;
                             }
-                            while buf.cursor_pos.line + 1 < content_len &&
-                                buf.contents[buf.cursor_pos.line].is_empty() {
+                            while buf.cursor_pos.line + 1 < content_len
+                                && buf.contents[buf.cursor_pos.line].is_empty()
+                            {
                                 buf.cursor_pos.line += 1;
                             }
                             if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
@@ -756,6 +759,13 @@ pub fn main() {
                             if let Some(showlinenos) = buf.vars.get_mut("showlinenos") {
                                 if let BimVar::Bool(x) = *showlinenos {
                                     *showlinenos = BimVar::Bool(!x);
+                                }
+                            }
+                        }
+                        KeyCode::Char('B') => {
+                            if let Some(showbottombar) = buf.vars.get_mut("showbottombar") {
+                                if let BimVar::Bool(x) = *showbottombar {
+                                    *showbottombar = BimVar::Bool(!x);
                                 }
                             }
                         }
