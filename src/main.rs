@@ -106,7 +106,7 @@ pub fn main() {
         String::from("scratch")
     };
     let mut buf = Buffer::new(&path);
-    print!("\x1bc");
+    print!("\x1bc\x1b[?25l");
     _ = terminal::enable_raw_mode();
     buf.save();
     'ed: loop {
@@ -770,7 +770,7 @@ pub fn main() {
         buf.iter_time += e;
         buf.iter_time >>= 1;
     }
-    print!("\x1bc");
+    print!("\x1bc\x1b[?25h");
     buf.save();
     _ = terminal::disable_raw_mode();
 }
