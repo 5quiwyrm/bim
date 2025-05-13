@@ -109,6 +109,7 @@ pub fn main() {
     print!("\x1bc\x1b[?25l");
     _ = terminal::enable_raw_mode();
     buf.save();
+    print!("Press any key (ideally esc)...");
     'ed: loop {
         let (widthu, heightu) = terminal::size().expect("terminal should have size");
         let _width = widthu as usize;
