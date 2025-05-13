@@ -187,9 +187,12 @@ impl Buffer {
             snippets::get_snippets(filepath)
         };
         let initvars = HashMap::from([
-            ("showlinenos".to_string(), BimVar::Bool(true)),
             ("lastact".to_string(), BimVar::Str(String::new())),
             ("showbottombar".to_string(), BimVar::Bool(true)),
+            (
+                "line-num-type".to_string(),
+                BimVar::Str(String::from("absolute")),
+            ),
         ]);
         let highlighted_contents = lang.highlight(&contents);
         Buffer {
@@ -416,6 +419,13 @@ impl Buffer {
         }
         let mut tb_printed = String::new();
 
+        #[derive(PartialEq, Debug)]
+        enum LineNumType {
+            None,
+            Absolute,
+            Relative,
+        }
+
         let content = &self.highlighted_contents;
         let indent_size = self.lang.indent_size();
         let spaces = 2;
@@ -427,45 +437,83 @@ impl Buffer {
         }
         let numsize = sidesize - spaces;
 
-        let showlinenos = matches!(self.vars.get("showlinenos"), Some(BimVar::Bool(true)));
-        let truewidth = if showlinenos { width - sidesize } else { width };
+        let linetype = match self.vars.get("line-num-type") {
+            Some(BimVar::Str(s)) => match s.as_str() {
+                "absolute" => LineNumType::Absolute,
+                "relative" => LineNumType::Relative,
+                _ => LineNumType::None,
+            },
+            _ => LineNumType::None,
+        };
+        let truewidth = if linetype != LineNumType::None {
+            width - sidesize
+        } else {
+            width
+        };
 
         let mut linectr = self.top;
         while linectr < self.top + height - bottom_pad && linectr < content.len() {
-            if showlinenos {
+            if linetype != LineNumType::None {
                 if linectr == self.cursor_pos.line {
-                    tb_printed
-                        .push_str(format!("\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str());
+                    _ = write!(
+                        &mut tb_printed,
+                        "\x1b[36m{: >numsize$}  \x1b[0m",
+                        linectr + 1
+                    );
+                } else if linetype == LineNumType::Relative {
+                    if linectr > self.cursor_pos.line {
+                        _ = write!(
+                            &mut tb_printed,
+                            "\x1b[2m\x1b[36m{: >numsize$}  \x1b[0m",
+                            linectr - self.cursor_pos.line
+                        );
+                    } else {
+                        _ = write!(
+                            &mut tb_printed,
+                            "\x1b[2m\x1b[36m{: >numsize$}  \x1b[0m",
+                            self.cursor_pos.line - linectr
+                        );
+                    }
                 } else {
-                    tb_printed.push_str(
-                        format!("\x1b[2m\x1b[36m{: >numsize$}  \x1b[0m", linectr + 1).as_str(),
+                    _ = write!(
+                        &mut tb_printed,
+                        "\x1b[2m\x1b[36m{: >numsize$}  \x1b[0m",
+                        linectr + 1
                     );
                 }
             }
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
-                let mut line_content = content[self.cursor_pos.line].iter();
-                while i < truewidth {
-                    let empty = languages::StyledChar {
-                        style: String::new(),
-                        ch: ' ',
-                    };
-                    let content = line_content.next().unwrap_or(&empty);
+                for content in content[self.cursor_pos.line].iter().take(truewidth) {
                     let id = self.indent_lvl * indent_size;
                     match i {
                         a if a == self.cursor_pos.idx => {
-                            tb_printed
-                                .push_str(format!("\x1b[47m\x1b[30m{content}\x1b[0m").as_str());
+                            _ = write!(&mut tb_printed, "\x1b[47m\x1b[30m{content}\x1b[0m");
                         }
                         b if b == id => {
                             if content.ch == ' ' {
-                                tb_printed.push_str("\x1b[2;33m|\x1b[0m");
+                                _ = write!(&mut tb_printed, "\x1b[2;33m|\x1b[0m");
                             } else {
-                                tb_printed.push_str(format!("\x1b[33m{content}\x1b[0m").as_str());
+                                _ = write!(&mut tb_printed, "\x1b[33m{content}\x1b[0m");
                             }
                         }
                         _ => {
-                            tb_printed.push_str(format!("{content}").as_str());
+                            _ = write!(&mut tb_printed, "{content}");
+                        }
+                    }
+                    i += 1;
+                }
+                while i < truewidth {
+                    let id = self.indent_lvl * indent_size;
+                    match i {
+                        a if a == self.cursor_pos.idx => {
+                            tb_printed.push_str("\x1b[47m\x1b[30m \x1b[0m");
+                        }
+                        b if b == id => {
+                            tb_printed.push_str("\x1b[2;33m|\x1b[0m");
+                        }
+                        _ => {
+                            tb_printed.push(' ');
                         }
                     }
                     i += 1;
@@ -478,13 +526,12 @@ impl Buffer {
                 tb_printed.push('\n');
             } else {
                 let mut i = 0;
-                let mut linechs = content[linectr].iter();
+                for c in content[linectr].iter() {
+                    _ = write!(&mut tb_printed, "{c}");
+                    i += 1;
+                }
                 while i < truewidth {
-                    let empty = languages::StyledChar {
-                        style: String::new(),
-                        ch: ' ',
-                    };
-                    tb_printed.push_str(format!("{}", linechs.next().unwrap_or(&empty)).as_str());
+                    tb_printed.push(' ');
                     i += 1;
                 }
                 tb_printed.push('\n');
@@ -516,22 +563,20 @@ impl Buffer {
             if bottom_bar.len() > width + escape_code_size {
                 bottom_bar.truncate(width + escape_code_size);
             }
-            tb_printed.push_str(format!("{bottom_bar: <width$}\x1b[0m").as_str());
+            _ = write!(&mut tb_printed, "{bottom_bar: <width$}\x1b[0m");
             tb_printed.push('\n');
-            tb_printed.push_str(
+            _ = write!(
+                &mut tb_printed,
+                "{: <width$}",
                 format!(
-                    "{: <width$}",
-                    format!(
-                        "{}{}",
-                        self.mode,
-                        if self.mode.show_temp() {
-                            format!(": {}", self.temp_str)
-                        } else {
-                            String::new()
-                        }
-                    )
+                    "{}{}",
+                    self.mode,
+                    if self.mode.show_temp() {
+                        format!(": {}", self.temp_str)
+                    } else {
+                        String::new()
+                    }
                 )
-                .as_str(),
             );
         } else {
             tb_printed.pop();

@@ -756,9 +756,13 @@ pub fn main() {
                     },
                     Mods::CtrlAlt => match key.code {
                         KeyCode::Char('L') => {
-                            if let Some(showlinenos) = buf.vars.get_mut("showlinenos") {
-                                if let BimVar::Bool(x) = *showlinenos {
-                                    *showlinenos = BimVar::Bool(!x);
+                            if let Some(showlinenos) = buf.vars.get_mut("line-num-type") {
+                                if let BimVar::Str(x) = showlinenos {
+                                    *showlinenos = match x.as_str() {
+                                        "absolute" => BimVar::Str("relative".to_string()),
+                                        "relative" => BimVar::Str("none".to_string()),
+                                        _ => BimVar::Str("absolute".to_string()),
+                                    }
                                 }
                             }
                         }
