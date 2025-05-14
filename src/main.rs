@@ -238,6 +238,66 @@ pub fn main() {
                                 buf.temp_str.clear();
                                 buf.mode = Mode::Default;
                             }
+                            Mode::KillLines => {
+                                'kl: {
+                                    let linenums: Vec<&str> =
+                                        buf.temp_str.split_whitespace().collect();
+                                    if linenums.len() == 2 {
+                                        let f = match linenums[0].parse::<usize>() {
+                                            Ok(o) if o <= buf.contents.len() => o,
+                                            _ => {
+                                                _ = buf.vars.insert(
+                                                    String::from("lastact"),
+                                                    BimVar::Str(String::from("Inval from")),
+                                                );
+                                                break 'kl;
+                                            }
+                                        };
+                                        let t = match linenums[1].parse::<usize>() {
+                                            Ok(o) if o <= buf.contents.len() => o,
+                                            _ => {
+                                                _ = buf.vars.insert(
+                                                    String::from("lastact"),
+                                                    BimVar::Str(String::from("Inval to")),
+                                                );
+                                                break 'kl;
+                                            }
+                                        };
+                                        if f > t || f == 0 {
+                                            _ = buf.vars.insert(
+                                                String::from("lastact"),
+                                                BimVar::Str(String::from("assert: f <= t")),
+                                            );
+                                            break 'kl;
+                                        }
+
+                                        let mut i = f;
+                                        while i <= t {
+                                            buf.contents.remove(f - 1);
+                                            i += 1;
+                                        }
+                                        if buf.contents.is_empty() {
+                                            buf.contents.push(String::from("\n"));
+                                        }
+                                        if buf.cursor_pos.line >= buf.contents.len() {
+                                            if !buf.contents.is_empty() {
+                                                buf.cursor_pos.line = buf.contents.len() - 1;
+                                            }
+                                        }
+                                        buf.update_highlighting();
+                                    } else {
+                                        _ = buf.vars.insert(
+                                            String::from("lastact"),
+                                            BimVar::Str(format!(
+                                                "{} args given, 2 expected",
+                                                linenums.len()
+                                            )),
+                                        );
+                                    }
+                                }
+                                buf.temp_str.clear();
+                                buf.mode = Mode::Default;
+                            }
                             Mode::OpenFile => {
                                 buf.save();
                                 buf.filepath = buf.temp_str.clone();
@@ -665,6 +725,16 @@ pub fn main() {
                                 buf.temp_str.push(c);
                             }
                         }
+                        KeyCode::Char('C') => {
+                            if buf.mode != Mode::KillLines {
+                                buf.mode = Mode::KillLines;
+                                buf.temp_str.clear();
+                            }
+                            let numbuf = format!("{} ", buf.cursor_pos.line + 1);
+                            for c in numbuf.chars() {
+                                buf.temp_str.push(c);
+                            }
+                        }
                         KeyCode::Char('A') => {
                             if buf.cursor_pos.line + 1 < buf.contents.len() {
                                 buf.contents
@@ -768,10 +838,8 @@ pub fn main() {
                             }
                         }
                         KeyCode::Char('B') => {
-                            if let Some(showbottombar) = buf.vars.get_mut("showbottombar") {
-                                if let BimVar::Bool(x) = *showbottombar {
-                                    *showbottombar = BimVar::Bool(!x);
-                                }
+                            if let Some(BimVar::Bool(showbottombar)) = buf.vars.get_mut("showbottombar") {
+                                *showbottombar = !*showbottombar;
                             }
                         }
                         _ => {}
@@ -781,9 +849,7 @@ pub fn main() {
         }
         buf.print(&event);
         stdout.flush().unwrap();
-        let e = start.elapsed().as_micros();
-        buf.iter_time += e;
-        buf.iter_time >>= 1;
+        buf.iter_time = start.elapsed().as_micros();
     }
     print!("\x1bc\x1b[?25h");
     buf.save();

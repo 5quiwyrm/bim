@@ -50,6 +50,8 @@ pub enum Mode {
     OpenFile,
     /// Copy mode.
     Copy,
+    /// Kill lines mode.
+    KillLines,
     /// Snippet mode.
     Snippet,
     /// Mode switching mode.
@@ -70,6 +72,7 @@ impl Mode {
             "open" | "o" | "openfile" => Mode::OpenFile,
             "copy" | "c" => Mode::Copy,
             "snippet" | "sn" => Mode::Snippet,
+            "killlines" | "kl" | "k" => Mode::KillLines,
             _ => Mode::Default,
         }
     }
@@ -87,6 +90,7 @@ impl fmt::Display for Mode {
             Mode::OpenFile => write!(f, "open file"),
             Mode::Copy => write!(f, "copying (from -> to)"),
             Mode::Snippet => write!(f, "snippet request"),
+            Mode::KillLines => write!(f, "Killing lines (from -> to"),
             Mode::Switch => write!(f, "switch to mode"),
         }
     }
@@ -98,7 +102,7 @@ impl Mode {
         use Mode::*;
         match self {
             Default | Paste | Replace | Find | ReplaceStr => false,
-            Goto | Switch | OpenFile | Copy | Snippet => true,
+            Goto | Switch | OpenFile | Copy | Snippet | KillLines => true,
         }
     }
 }
