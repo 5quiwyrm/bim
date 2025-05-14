@@ -22,6 +22,7 @@ pub struct StyledChar {
 }
 
 impl fmt::Display for StyledChar {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}\x1b[0m", self.style, self.ch)
     }

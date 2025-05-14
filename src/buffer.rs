@@ -117,6 +117,16 @@ pub fn style_time(t: u128) -> String {
     }
 }
 
+pub fn style_time_raw(t: u128) -> String {
+    if t < 16666 {
+        format!("\x1b[32m{}\x1b[0m", t) // > 60
+    } else if t < 50000 {
+        format!("\x1b[33m{}\x1b[0m", t) // 60 ~ 20
+    } else {
+        format!("\x1b[31m{}\x1b[0m", t) // < 20
+    }
+}
+
 pub enum BimVar {
     Bool(bool),
     Str(String),
@@ -414,7 +424,10 @@ impl Buffer {
         let showbottombar = matches!(self.vars.get("showbottombar"), Some(BimVar::Bool(true)));
 
         let height = heightu as usize;
-        let bottom_pad = if showbottombar { 2 } else { 0 };
+        let mut bottom_pad = if showbottombar { 2 } else { 0 };
+        if cfg!(feature = "profile") {
+            bottom_pad += 1;
+        }
         if self.cursor_pos.line > self.top + height - bottom_pad - 3 {
             self.top = self.cursor_pos.line + bottom_pad + 3 - height;
         }
@@ -545,7 +558,7 @@ impl Buffer {
 
         if showbottombar {
             let mut bottom_bar = format!(
-                "[{}] {}{}(act: {}) [{}; {}] ({} fps) {}",
+                "[{}] {}{}(act: {}) [{}; {}] ({: <12} fps) {}",
                 self.filepath,
                 if self.find_str.is_empty() {
                     String::new()

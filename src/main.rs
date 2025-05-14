@@ -11,7 +11,7 @@ use crossterm::{
 use std::{
     env::args,
     io::{self, Write},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 /// Returns matching brace for given open brace.
@@ -99,6 +99,8 @@ impl Mods {
 pub fn main() {
     let mut stdout = io::stdout();
     let mut args = args().peekable();
+    let mut processing_time: u128 = 0;
+    let mut printing_time: u128 = 0;
     _ = args.next();
     let path = if args.peek().is_some() {
         args.collect::<Vec<String>>().join(" ")
@@ -112,7 +114,7 @@ pub fn main() {
     print!("Press any key (ideally esc)...");
     'ed: loop {
         let (widthu, heightu) = terminal::size().expect("terminal should have size");
-        let _width = widthu as usize;
+        let width = widthu as usize;
         let height = heightu as usize;
         let event = event::read().expect("there should be an event upon reading");
         let start = Instant::now();
@@ -823,6 +825,10 @@ pub fn main() {
                                 buf.update_highlighting();
                             }
                         }
+                        KeyCode::Char('o') => {
+                            buf.mode = Mode::OpenFile;
+                            buf.temp_str.clear();
+                        }
                         _ => {}
                     },
                     Mods::CtrlAlt => match key.code {
@@ -838,7 +844,9 @@ pub fn main() {
                             }
                         }
                         KeyCode::Char('B') => {
-                            if let Some(BimVar::Bool(showbottombar)) = buf.vars.get_mut("showbottombar") {
+                            if let Some(BimVar::Bool(showbottombar)) =
+                                buf.vars.get_mut("showbottombar")
+                            {
                                 *showbottombar = !*showbottombar;
                             }
                         }
@@ -847,7 +855,26 @@ pub fn main() {
                 }
             }
         }
+        if cfg!(feature = "profile") {
+            processing_time += start.elapsed().as_micros();
+            processing_time >>= 1;
+        }
         buf.print(&event);
+        if cfg!(feature = "profile") {
+            printing_time += start.elapsed().as_micros();
+            printing_time >>= 1;
+        }
+        if cfg!(feature = "profile") {
+            print!(
+                "{: <width$}",
+                format!(
+                    "Printing: {: <14} us | Processing input: {: <14} us | Total: {: <14} us",
+                    style_time_raw(processing_time),
+                    style_time_raw(printing_time),
+                    style_time_raw(processing_time + printing_time),
+                )
+            );
+        }
         stdout.flush().unwrap();
         buf.iter_time = start.elapsed().as_micros();
     }
