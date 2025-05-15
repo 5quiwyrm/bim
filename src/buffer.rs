@@ -207,7 +207,7 @@ impl Buffer {
                 "line-num-type".to_string(),
                 BimVar::Str(String::from("absolute")),
             ),
-            ("changed".to_string(), BimVar::Bool(false)),
+            ("changed".to_string(), BimVar::Bool(true)),
         ]);
         let highlighted_contents = lang.highlight(&contents);
         Buffer {
