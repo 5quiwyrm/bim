@@ -418,12 +418,12 @@ pub fn main() {
                         KeyCode::Char('s') => {
                             buf.save();
                         }
-                        KeyCode::Char('b') => {
+                        KeyCode::Char('b') | KeyCode::End => {
                             let linect = buf.contents.len();
                             buf.cursor_pos.line = if linect == 0 { 0 } else { linect - 1 };
                             buf.cursor_pos.idx = 0;
                         }
-                        KeyCode::Char('t') => {
+                        KeyCode::Char('t') | KeyCode::Home => {
                             buf.cursor_pos.line = 0;
                             buf.cursor_pos.idx = 0;
                         }
@@ -611,7 +611,7 @@ pub fn main() {
                                 }
                             }
                         }
-                        KeyCode::Char('x') => {
+                        KeyCode::Char('x') | KeyCode::Char('M') => {
                             buf.mode = Mode::Switch;
                             buf.temp_str.clear();
                         }
