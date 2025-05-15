@@ -877,6 +877,7 @@ pub fn main() {
         }
         stdout.flush().unwrap();
         buf.iter_time = start.elapsed().as_micros();
+        buf.iter_time >>= 1;
     }
     print!("\x1bc\x1b[?25h");
     buf.save();
