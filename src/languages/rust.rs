@@ -81,8 +81,7 @@ impl Language for Rust {
                         "\x1b[1;34m"
                     } else {
                         ""
-                    })
-                    .to_string(),
+                    }),
                     ch,
                 });
                 idx += 1;

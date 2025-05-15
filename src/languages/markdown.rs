@@ -19,13 +19,13 @@ impl Language for Markdown {
             while line_chars.peek() == Some(&'#') {
                 header_lvl += 1;
                 let pound = StyledChar {
-                    style: "\x1b[2m".to_string(),
+                    style: "\x1b[2m",
                     ch: '#',
                 };
                 push_buf.push(pound);
                 _ = line_chars.next();
             }
-            let style = (match header_lvl {
+            let style = match header_lvl {
                 1 => "\x1b[1;34m",
                 2 => "\x1b[35m",
                 3 => "\x1b[32m",
@@ -33,13 +33,9 @@ impl Language for Markdown {
                 5 => "\x1b[31m",
                 6 => "\x1b[36m",
                 _ => "",
-            })
-            .to_string();
+            };
             for ch in line_chars {
-                let c = StyledChar {
-                    style: style.clone(),
-                    ch,
-                };
+                let c = StyledChar { style, ch };
                 push_buf.push(c);
             }
             ret_buf.push(push_buf);

@@ -17,7 +17,7 @@ pub trait Language {
 /// Struct for styling chars.
 #[derive(PartialEq, Clone)]
 pub struct StyledChar {
-    pub style: String,
+    pub style: &'static str,
     pub ch: char,
 }
 
@@ -31,10 +31,7 @@ impl fmt::Display for StyledChar {
 impl StyledChar {
     /// Generates `StyledChar` from raw character, with no styling.
     pub fn from_char(ch: char) -> StyledChar {
-        StyledChar {
-            style: String::new(),
-            ch,
-        }
+        StyledChar { style: "", ch }
     }
     /// Generates `Vec<StyledChar>` from string, with no styling.
     pub fn from_string(s: &str) -> Vec<StyledChar> {
@@ -45,13 +42,8 @@ impl StyledChar {
         ret_vec
     }
 
-    pub fn colour_string(s: &str, style: String) -> Vec<StyledChar> {
-        s.chars()
-            .map(|ch: char| StyledChar {
-                style: style.clone(),
-                ch,
-            })
-            .collect()
+    pub fn colour_string(s: &str, style: &'static str) -> Vec<StyledChar> {
+        s.chars().map(|ch: char| StyledChar { style, ch }).collect()
     }
 }
 

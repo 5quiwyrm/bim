@@ -33,7 +33,7 @@ impl Language for Forest {
             for tk in line {
                 StyledChar::colour_string(
                     tk,
-                    (match tk.trim() {
+                    match tk.trim() {
                         "dup" | "drop" | "swap" | "rot" => "\x1b[35m",
                         "+" | "-" | "*" | "/" | "=" | ">" | "<" | "&" | "|" | "!" => "\x1b[36m",
                         "str" | "<>" | "." => "\x1b[31m",
@@ -44,8 +44,7 @@ impl Language for Forest {
                         u if u.chars().all(|c| c.is_numeric()) => "\x1b[36m",
                         "nil" => "\x1b[31m",
                         _ => "",
-                    })
-                    .to_string(),
+                    },
                 )
                 .iter()
                 .for_each(|c| push_buf.push(c.clone()));

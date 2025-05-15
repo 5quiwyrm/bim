@@ -207,6 +207,7 @@ impl Buffer {
                 "line-num-type".to_string(),
                 BimVar::Str(String::from("absolute")),
             ),
+            ("changed".to_string(), BimVar::Bool(false)),
         ]);
         let highlighted_contents = lang.highlight(&contents);
         Buffer {
@@ -231,6 +232,7 @@ impl Buffer {
     /// Updates highlighting. Performance cost varies. Call as infrequently as possible.
     #[inline]
     pub fn update_highlighting(&mut self) {
+        *self.vars.get_mut("changed").unwrap() = BimVar::Bool(true);
         self.highlighted_contents = self.lang.highlight(&self.contents);
     }
 
@@ -314,13 +316,19 @@ impl Buffer {
     #[inline]
     pub fn save(&mut self) {
         if self.filepath != *"scratch" {
-            let trimmedlines: Vec<&str> = self.contents.iter().map(|s| s.trim_end()).collect();
-            let mut writecontent = trimmedlines.join("\n");
-            writecontent.push('\n');
-            _ = fs::write(self.filepath.clone(), writecontent);
-            _ = self
-                .vars
-                .insert(String::from("lastact"), BimVar::Str(String::from("save")));
+            if let Some(BimVar::Bool(changed)) = self.vars.get_mut("changed") {
+                if *changed {
+                    *changed = false;
+                    let trimmedlines: Vec<&str> =
+                        self.contents.iter().map(|s| s.trim_end()).collect();
+                    let mut writecontent = trimmedlines.join("\n");
+                    writecontent.push('\n');
+                    _ = fs::write(self.filepath.clone(), writecontent);
+                    _ = self
+                        .vars
+                        .insert(String::from("lastact"), BimVar::Str(String::from("save")));
+                }
+            }
         }
     }
 
@@ -399,7 +407,6 @@ impl Buffer {
             .lines()
             .map(|s| s.to_string())
             .collect();
-        self.save();
         self.lang = if self.contents[0].contains("use-ext:") {
             languages::get_lang(&self.contents[0])
         } else {
@@ -411,6 +418,7 @@ impl Buffer {
             snippets::get_snippets(&self.filepath)
         };
         self.update_highlighting();
+        self.save();
     }
 
     pub fn print(&mut self, event: &event::Event) {

@@ -40,7 +40,7 @@ impl Language for Tinylisp {
             }
             tks.push(acc);
             tks.iter().for_each(|s| {
-                let style = (match s.trim() {
+                let style = match s.trim() {
                     "+" | "-" | "*" | "/" | "=" | ">" | "<" => "\x1b[36m",
                     "str" => "\x1b[31m",
                     "car" | "cdr" | "cons" | "quote" | "eval" => "\x1b[35m",
@@ -50,9 +50,8 @@ impl Language for Tinylisp {
                     u if u.chars().all(|c| c.is_numeric()) => "\x1b[1;34m",
                     "nil" => "\x1b[31m",
                     _ => "",
-                })
-                .to_string();
-                let styled_str = StyledChar::colour_string(s, style.clone());
+                };
+                let styled_str = StyledChar::colour_string(s, style);
                 styled_str.iter().for_each(|c| push_buf.push(c.clone()));
             });
             ret_buf.push(push_buf);
