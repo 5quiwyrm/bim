@@ -17,7 +17,7 @@ impl Language for Haskell {
     fn indent_size(&self) -> usize {
         2
     }
-    fn display_str(&self) -> &str {
+    fn display_str(&self) -> &'static str {
         "HaskLUL"
     }
 }

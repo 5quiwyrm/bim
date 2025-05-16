@@ -119,11 +119,11 @@ pub fn style_time(t: u128) -> String {
 
 pub fn style_time_raw(t: u128) -> String {
     if t < 16666 {
-        format!("\x1b[32m{}\x1b[0m", t) // > 60
+        format!("\x1b[32m{t}\x1b[0m") // > 60
     } else if t < 50000 {
-        format!("\x1b[33m{}\x1b[0m", t) // 60 ~ 20
+        format!("\x1b[33m{t}\x1b[0m") // 60 ~ 20
     } else {
-        format!("\x1b[31m{}\x1b[0m", t) // < 20
+        format!("\x1b[31m{t}\x1b[0m") // < 20
     }
 }
 
@@ -232,8 +232,10 @@ impl Buffer {
     /// Updates highlighting. Performance cost varies. Call as infrequently as possible.
     #[inline]
     pub fn update_highlighting(&mut self) {
-        *self.vars.get_mut("changed").unwrap() = BimVar::Bool(true);
-        self.highlighted_contents = self.lang.highlight(&self.contents);
+        if let Some(change) = self.vars.get_mut("changed") {
+            *change = BimVar::Bool(true);
+            self.highlighted_contents = self.lang.highlight(&self.contents);
+        }
     }
 
     #[inline]
@@ -423,7 +425,7 @@ impl Buffer {
 
     pub fn print(&mut self, event: &event::Event) {
         print!("\x1b[J\x1b[H");
-        let (widthu, heightu) = terminal::size().unwrap();
+        let (widthu, heightu) = terminal::size().expect("The terminal should have a size");
         let width = widthu as usize;
         // the width calculations are wrong on posix
         // uncomment the next line on posix:
@@ -475,10 +477,10 @@ impl Buffer {
             },
             _ => LineNumType::None,
         };
-        let truewidth = if linetype != LineNumType::None {
-            width - sidesize
-        } else {
+        let truewidth = if linetype == LineNumType::None {
             width
+        } else {
+            width - sidesize
         };
 
         let mut linectr = self.top;
@@ -558,7 +560,7 @@ impl Buffer {
                 tb_printed.push('\n');
             } else {
                 let mut i = 0;
-                for c in content[linectr].iter() {
+                for c in &content[linectr] {
                     _ = write!(&mut tb_printed, "{c}");
                     i += 1;
                 }

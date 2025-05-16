@@ -11,7 +11,7 @@ pub trait Language {
     /// Returns indent size used.
     fn indent_size(&self) -> usize;
     /// Converts to display string.
-    fn display_str(&self) -> &str;
+    fn display_str(&self) -> &'static str;
 }
 
 /// Struct for styling chars.

@@ -34,10 +34,9 @@ impl Language for Forest {
                 StyledChar::colour_string(
                     tk,
                     match tk.trim() {
-                        "dup" | "drop" | "swap" | "rot" => "\x1b[35m",
+                        "dup" | "drop" | "swap" | "rot" | "{}" | "assoc" | "keys" | "vals" | "splat" => "\x1b[35m",
                         "+" | "-" | "*" | "/" | "=" | ">" | "<" | "&" | "|" | "!" => "\x1b[36m",
                         "str" | "<>" | "." => "\x1b[31m",
-                        "{}" | "assoc" | "keys" | "vals" | "splat" => "\x1b[35m",
                         "if" | "ifend" | "[" | "]" | "break" | "exit" => "\x1b[1;34m",
                         "::" | ":" | "=>" | "->" | ";" | "include" => "\x1b[33m",
                         t if t.chars().nth(0) == Some('\"') => "\x1b[32m",
@@ -59,7 +58,7 @@ impl Language for Forest {
         4
     }
 
-    fn display_str(&self) -> &str {
+    fn display_str(&self) -> &'static str {
         "Forest"
     }
 }

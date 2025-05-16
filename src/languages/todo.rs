@@ -19,9 +19,7 @@ impl Language for Todo {
                             "[ ] " => "\x1b[33m",
                             "[ ]!" => "\x1b[31m",
                             "[ ]~" => "\x1b[36m",
-                            "[V] " => "\x1b[32m",
-                            "[V]!" => "\x1b[32m",
-                            "[V]~" => "\x1b[32m",
+                            "[V] " | "[V]!" | "[V]~" => "\x1b[32m",
                             _ => "\x1b[2m",
                         }
                     } else {
@@ -34,7 +32,7 @@ impl Language for Todo {
     fn indent_size(&self) -> usize {
         2
     }
-    fn display_str(&self) -> &str {
+    fn display_str(&self) -> &'static str {
         "Ssorgn't"
     }
 }

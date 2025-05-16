@@ -6,7 +6,7 @@ pub trait Snippet {
     /// Detects whether a file should use these snippets.
     fn is_kind(&self, filepath: &str) -> bool;
     /// Returns string to display.
-    fn display_str(&self) -> &str;
+    fn display_str(&self) -> &'static str;
 }
 
 pub mod text;

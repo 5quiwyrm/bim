@@ -45,7 +45,7 @@ impl Language for Markdown {
     fn indent_size(&self) -> usize {
         4
     }
-    fn display_str(&self) -> &str {
+    fn display_str(&self) -> &'static str {
         "Markdown"
     }
 }

@@ -95,7 +95,7 @@ impl Language for Rust {
         4
     }
 
-    fn display_str(&self) -> &str {
+    fn display_str(&self) -> &'static str {
         "Rust"
     }
 }

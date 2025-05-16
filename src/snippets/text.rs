@@ -11,7 +11,7 @@ impl Snippet for Text {
     fn query(&self, _query: &str) -> &[&str] {
         &[]
     }
-    fn display_str(&self) -> &str {
+    fn display_str(&self) -> &'static str {
         "Text"
     }
 }

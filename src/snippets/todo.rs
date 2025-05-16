@@ -16,7 +16,7 @@ impl Snippet for Todo {
             _ => &[],
         }
     }
-    fn display_str(&self) -> &str {
+    fn display_str(&self) -> &'static str {
         "Ssorgn't"
     }
 }

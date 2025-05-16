@@ -39,7 +39,7 @@ impl Language for Tinylisp {
                 }
             }
             tks.push(acc);
-            tks.iter().for_each(|s| {
+            for s in &tks {
                 let style = match s.trim() {
                     "+" | "-" | "*" | "/" | "=" | ">" | "<" => "\x1b[36m",
                     "str" => "\x1b[31m",
@@ -53,7 +53,7 @@ impl Language for Tinylisp {
                 };
                 let styled_str = StyledChar::colour_string(s, style);
                 styled_str.iter().for_each(|c| push_buf.push(c.clone()));
-            });
+            }
             ret_buf.push(push_buf);
         }
         ret_buf
@@ -61,7 +61,7 @@ impl Language for Tinylisp {
     fn indent_size(&self) -> usize {
         2
     }
-    fn display_str(&self) -> &str {
+    fn display_str(&self) -> &'static str {
         "Tinylisp"
     }
 }
