@@ -439,8 +439,13 @@ impl Buffer {
         if self.cursor_pos.line > self.top + height - bottom_pad - 3 {
             self.top = self.cursor_pos.line + bottom_pad + 3 - height;
         }
-        if self.cursor_pos.line < self.top {
-            self.top = self.cursor_pos.line;
+
+        let top_pad = 3;
+        if self.cursor_pos.line < self.top + top_pad && self.cursor_pos.line >= top_pad {
+            self.top = self.cursor_pos.line - 3;
+        }
+        if self.cursor_pos.line <= top_pad {
+            self.top = 0;
         }
         let mut tb_printed = String::new();
 
@@ -477,7 +482,9 @@ impl Buffer {
         };
 
         let mut linectr = self.top;
+        let mut linesprinted = 0;
         while linectr < self.top + height - bottom_pad && linectr < content.len() {
+            linesprinted += 1;
             if linetype != LineNumType::None {
                 if linectr == self.cursor_pos.line {
                     _ = write!(
@@ -562,6 +569,14 @@ impl Buffer {
                 tb_printed.push('\n');
             }
             linectr += 1;
+        }
+
+        while linesprinted + bottom_pad < height {
+            for _ in 0..width {
+                tb_printed.push(' ');
+            }
+            tb_printed.push('\n');
+            linesprinted += 1;
         }
 
         if showbottombar {

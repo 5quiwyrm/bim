@@ -693,6 +693,9 @@ pub fn main() {
                                 }
                             }
                             buf.move_right();
+                            if buf.cursor_pos.idx == 0 {
+                                buf.move_left();
+                            }
                         }
                         KeyCode::Char('W') => {
                             while buf.contents[buf.cursor_pos.line]
@@ -715,7 +718,6 @@ pub fn main() {
                                     break;
                                 }
                             }
-                            buf.move_left();
                         }
                         KeyCode::Char('y') => {
                             buf.contents.insert(
