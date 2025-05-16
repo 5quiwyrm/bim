@@ -500,6 +500,10 @@ pub fn main() {
                                 if buf.cursor_pos.idx >= indent_size {
                                     buf.cursor_pos.idx -= indent_size;
                                 }
+                                let linelen = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx > linelen {
+                                    buf.cursor_pos.idx = linelen;
+                                };
                             }
                             buf.adjust_indent();
                         }
@@ -507,6 +511,10 @@ pub fn main() {
                             buf.indent_lvl += 1;
                             buf.cursor_pos.idx += buf.lang.indent_size();
                             buf.adjust_indent();
+                            let linelen = buf.contents[buf.cursor_pos.line].len();
+                            if buf.cursor_pos.idx > linelen {
+                                buf.cursor_pos.idx = linelen;
+                            };
                         }
                         KeyCode::Char(';') => {
                             let mut currline = buf.contents[buf.cursor_pos.line].chars();
@@ -799,7 +807,7 @@ pub fn main() {
                             buf.reload_file();
                             buf.cursor_pos.line = 0;
                             buf.cursor_pos.idx = 0;
-                            print!("\x1bc");
+                            print!("\x1bc\x1b[?25l");
                         }
                         KeyCode::Char('z') => {
                             buf.reload_file();
@@ -809,6 +817,7 @@ pub fn main() {
                             if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
                                 buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                             }
+                            print!("\x1bc\x1b[?25l");
                         }
                         KeyCode::Backspace => {
                             while buf.fast_backspace().unwrap_or('a').is_whitespace() {}
