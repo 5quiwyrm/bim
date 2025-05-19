@@ -34,7 +34,8 @@ impl Language for Forest {
                 StyledChar::colour_string(
                     tk,
                     match tk.trim() {
-                        "dup" | "drop" | "swap" | "rot" | "{}" | "assoc" | "keys" | "vals" | "splat" => "\x1b[35m",
+                        "dup" | "drop" | "swap" | "rot" | "{}" | "assoc" | "keys" | "vals"
+                        | "splat" => "\x1b[35m",
                         "+" | "-" | "*" | "/" | "=" | ">" | "<" | "&" | "|" | "!" => "\x1b[36m",
                         "str" | "<>" | "." => "\x1b[31m",
                         "if" | "ifend" | "[" | "]" | "break" | "exit" => "\x1b[1;34m",

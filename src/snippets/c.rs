@@ -13,10 +13,7 @@ impl Snippet for Clang {
         match query.trim() {
             "include" | "i" => &["#include <>"],
             "define" | "d" => &["#define "],
-            "stds" | "s" => &[
-                "#include <stdio.h>",
-                "#include <stdlib.h>",
-            ],
+            "stds" | "s" => &["#include <stdio.h>", "#include <stdlib.h>"],
             _ => &[],
         }
     }
