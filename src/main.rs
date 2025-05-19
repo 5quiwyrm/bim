@@ -207,6 +207,7 @@ pub fn main() {
                                                 BimVar::Str(String::from("Inval line num")),
                                             );
                                         }
+                                        buf.temp_str.clear();
                                         buf.mode = return_mode;
                                     }
                                     Mode::Copy => {

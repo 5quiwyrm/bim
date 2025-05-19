@@ -4,7 +4,7 @@ use crossterm::event::{self, KeyCode};
 
 pub const VIM_ITER_LIMIT: usize = 10000;
 
-macro_rules! vim_repeat {
+macro_rules! repeat_action {
     ($buf: ident, $action: block) => {
         if $buf.temp_str.is_empty() {
             $action
@@ -43,27 +43,55 @@ pub fn handle_nav(
                 buf.temp_str.push(n);
             }
             KeyCode::Char('c') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     buf.move_left();
                 });
             }
             KeyCode::Char('i') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     buf.move_right();
                 });
             }
             KeyCode::Char('e') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     buf.move_up();
                 });
             }
             KeyCode::Char('a') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     buf.move_down();
                 });
             }
+            KeyCode::Char('h') => {
+                buf.contents[buf.cursor_pos.line].replace_range(
+                    (if buf.cursor_pos.idx >= buf.find_str.len() {
+                        buf.cursor_pos.idx - buf.find_str.len()
+                    } else {
+                        0
+                    })..buf.cursor_pos.idx,
+                    &buf.replace_str,
+                );
+                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                }
+                buf.update_highlighting();
+            }
+            KeyCode::Char('o') => {
+                repeat_action!(buf, {buf.newline_below("");});
+                buf.mode = Mode::Default;
+            }
+            KeyCode::Char('O') => {
+                repeat_action!(buf, {if buf.move_up() {
+                    buf.newline_below("");
+                } else {
+                    buf.contents.insert(0, String::new());
+                    buf.cursor_pos.idx = 0;
+                    buf.update_highlighting();
+                }});
+                buf.mode = Mode::Default;
+            }
             KeyCode::Char('w') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     while buf.contents[buf.cursor_pos.line]
                         .chars()
                         .nth(buf.cursor_pos.idx)
@@ -91,7 +119,7 @@ pub fn handle_nav(
                 })
             }
             KeyCode::Char('W') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     while buf.contents[buf.cursor_pos.line]
                         .chars()
                         .nth(buf.cursor_pos.idx)
@@ -152,7 +180,7 @@ pub fn handle_nav(
                 buf.cursor_pos.idx = 0;
             }
             KeyCode::Char('u') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     if buf.cursor_pos.line >= height {
                         buf.cursor_pos.line -= height;
                     } else {
@@ -165,7 +193,7 @@ pub fn handle_nav(
                 });
             }
             KeyCode::Char('n') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     if buf.move_right() {
                         'findfwd: loop {
                             let prevpos = buf.cursor_pos;
@@ -186,7 +214,7 @@ pub fn handle_nav(
                 });
             }
             KeyCode::Char('p') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     if buf.move_left() {
                         'findfwd: loop {
                             let prevpos = buf.cursor_pos;
@@ -209,7 +237,7 @@ pub fn handle_nav(
                 });
             }
             KeyCode::Char('d') => {
-                vim_repeat!(buf, {
+                repeat_action!(buf, {
                     if buf.cursor_pos.line + height >= buf.contents.len() {
                         buf.cursor_pos.line = buf.contents.len();
                         if buf.cursor_pos.line != 0 {
