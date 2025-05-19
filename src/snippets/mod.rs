@@ -15,9 +15,14 @@ use text::*;
 pub mod todo;
 use todo::*;
 
+pub mod c;
+use c::*;
+
 pub fn get_snippets(path: &str) -> Box<dyn Snippet> {
     if TODO.is_kind(path) {
         Box::new(TODO)
+    } else if CLANG.is_kind(path) {
+        Box::new(CLANG)
     } else {
         Box::new(TEXT)
     }
