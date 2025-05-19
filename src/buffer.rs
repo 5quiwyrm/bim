@@ -23,7 +23,7 @@ pub fn pretty_str_event(event: &event::Event) -> String {
 }
 
 /// Structure for storing cursor position.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct Cursor {
     /// Line number (subtracted by 1).
     pub line: usize,
@@ -54,6 +54,8 @@ pub enum Mode {
     KillLines,
     /// Snippet mode.
     Snippet,
+    /// Navigation mode.
+    Nav,
     /// Mode switching mode.
     Switch,
 }
@@ -73,6 +75,7 @@ impl Mode {
             "copy" | "c" => Mode::Copy,
             "snippet" | "sn" => Mode::Snippet,
             "killlines" | "kl" | "k" => Mode::KillLines,
+            "nav" | "n" => Mode::Nav,
             _ => Mode::Default,
         }
     }
@@ -90,7 +93,8 @@ impl fmt::Display for Mode {
             Mode::OpenFile => write!(f, "open file"),
             Mode::Copy => write!(f, "copying (from -> to)"),
             Mode::Snippet => write!(f, "snippet request"),
-            Mode::KillLines => write!(f, "Killing lines (from -> to"),
+            Mode::KillLines => write!(f, "Killing lines (from -> to)"),
+            Mode::Nav => write!(f, "nav :"),
             Mode::Switch => write!(f, "switch to mode"),
         }
     }
@@ -102,7 +106,7 @@ impl Mode {
         use Mode::*;
         match self {
             Default | Paste | Replace | Find | ReplaceStr => false,
-            Goto | Switch | OpenFile | Copy | Snippet | KillLines => true,
+            Goto | Switch | OpenFile | Copy | Snippet | KillLines | Nav => true,
         }
     }
 }
@@ -205,9 +209,10 @@ impl Buffer {
             ("showbottombar".to_string(), BimVar::Bool(true)),
             (
                 "line-num-type".to_string(),
-                BimVar::Str(String::from("absolute")),
+                BimVar::Str(String::from("relative")),
             ),
             ("changed".to_string(), BimVar::Bool(true)),
+            ("ret-to-nav".to_string(), BimVar::Bool(false)),
         ]);
         let highlighted_contents = lang.highlight(&contents);
         Buffer {
