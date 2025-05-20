@@ -212,7 +212,10 @@ impl Buffer {
                 BimVar::Str(String::from("relative")),
             ),
             ("changed".to_string(), BimVar::Bool(true)),
-            ("ret-to-nav".to_string(), BimVar::Bool(false)),
+            (
+                "ret-to-nav".to_string(),
+                BimVar::Bool(cfg!(feature = "nav-pro")),
+            ),
         ]);
         let highlighted_contents = lang.highlight(&contents);
         Buffer {
@@ -230,7 +233,7 @@ impl Buffer {
             indent_lvl: 0,
             lang,
             snippets,
-            mode: Mode::Default,
+            mode: Mode::Nav,
         }
     }
 

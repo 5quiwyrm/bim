@@ -157,7 +157,11 @@ pub fn main() {
                     match modifiers {
                         Mods::None => match key.code {
                             KeyCode::Esc => {
-                                buf.mode = Mode::Default;
+                                if cfg!(feature = "nav-pro") {
+                                    buf.mode = Mode::Nav;
+                                } else {
+                                    buf.mode = Mode::Default;
+                                }
                             }
                             KeyCode::Backspace => match buf.mode {
                                 Mode::Find => {
@@ -893,6 +897,18 @@ pub fn main() {
                             KeyCode::Char('o') => {
                                 buf.mode = Mode::OpenFile;
                                 buf.temp_str.clear();
+                            }
+                            KeyCode::Char('y') => {
+                                if buf.top < buf.contents.len() {
+                                    buf.top += 1;
+                                }
+                                buf.move_down();
+                            }
+                            KeyCode::Char('e') => {
+                                if buf.top > 0 {
+                                    buf.top -= 1;
+                                }
+                                buf.move_up();
                             }
                             _ => {}
                         },

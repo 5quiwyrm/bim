@@ -8,6 +8,6 @@ crossterm = "0.29.0"
 
 [features]
 default = []
-
 profile = []
+nav-pro = []
 

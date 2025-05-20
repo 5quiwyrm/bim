@@ -39,6 +39,26 @@ pub fn handle_nav(
             KeyCode::Home | KeyCode::Char('0') if buf.temp_str.is_empty() => {
                 buf.cursor_pos.idx = 0;
             }
+            KeyCode::Char(n) if &buf.temp_str == "f" => {
+                buf.temp_str.clear();
+                if buf.move_right() {
+                    'findfwd: loop {
+                        let prevpos = buf.cursor_pos;
+                        if let Some(p) =
+                            buf.contents[buf.cursor_pos.line][buf.cursor_pos.idx..].find(n)
+                        {
+                            buf.cursor_pos.idx += p;
+                            buf.cursor_pos.idx += 1;
+                            break 'findfwd;
+                        }
+                        buf.cursor_pos.idx = 0;
+                        if !buf.move_down() {
+                            buf.cursor_pos = prevpos;
+                            break 'findfwd;
+                        }
+                    }
+                }
+            }
             KeyCode::Char(n) if n.is_numeric() => {
                 buf.temp_str.push(n);
             }
@@ -62,6 +82,9 @@ pub fn handle_nav(
                     buf.move_down();
                 });
             }
+            KeyCode::Char('f') => {
+                buf.temp_str.push('f');
+            }
             KeyCode::Char('h') => {
                 buf.contents[buf.cursor_pos.line].replace_range(
                     (if buf.cursor_pos.idx >= buf.find_str.len() {
@@ -77,17 +100,21 @@ pub fn handle_nav(
                 buf.update_highlighting();
             }
             KeyCode::Char('o') => {
-                repeat_action!(buf, {buf.newline_below("");});
+                repeat_action!(buf, {
+                    buf.newline_below("");
+                });
                 buf.mode = Mode::Default;
             }
             KeyCode::Char('O') => {
-                repeat_action!(buf, {if buf.move_up() {
-                    buf.newline_below("");
-                } else {
-                    buf.contents.insert(0, String::new());
-                    buf.cursor_pos.idx = 0;
-                    buf.update_highlighting();
-                }});
+                repeat_action!(buf, {
+                    if buf.move_up() {
+                        buf.newline_below("");
+                    } else {
+                        buf.contents.insert(0, String::new());
+                        buf.cursor_pos.idx = 0;
+                        buf.update_highlighting();
+                    }
+                });
                 buf.mode = Mode::Default;
             }
             KeyCode::Char('w') => {
@@ -257,6 +284,26 @@ pub fn handle_nav(
         Mods::Alt => match key.code {
             KeyCode::Char('q') => {
                 return true;
+            }
+            KeyCode::Char('o') => {
+                buf.mode = Mode::OpenFile;
+                buf.temp_str.clear();
+            }
+            KeyCode::Char('a') => {
+                repeat_action!(buf, {
+                    if buf.top < buf.contents.len() {
+                        buf.top += 1;
+                    }
+                    buf.move_down();
+                });
+            }
+            KeyCode::Char('e') => {
+                repeat_action!(buf, {
+                    if buf.top > 0 {
+                        buf.top -= 1;
+                    }
+                    buf.move_up();
+                });
             }
             _ => {}
         },
