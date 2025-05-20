@@ -279,6 +279,42 @@ pub fn handle_nav(
                     }
                 });
             }
+            KeyCode::Char('k') => {
+                repeat_action!(buf, {
+                    if buf.contents.len() == 1 {
+                        buf.contents[0].clear();
+                        buf.cursor_pos.idx = 0;
+                    } else {
+                        buf.contents.remove(buf.cursor_pos.line);
+                        buf.cursor_pos.idx = 0;
+                    }
+                    let contentlen = buf.contents.len();
+                    if buf.cursor_pos.line >= contentlen && !buf.contents.is_empty() {
+                        buf.cursor_pos.line = contentlen - 1;
+                    }
+                });
+                buf.update_highlighting();
+            }
+            KeyCode::Char('K') => {
+                repeat_action!(buf, {
+                    if buf.contents.len() == 1 {
+                        buf.contents[0].clear();
+                        buf.cursor_pos.idx = 0;
+                    } else {
+                        buf.contents.remove(buf.cursor_pos.line);
+                        buf.cursor_pos.idx = 0;
+                    }
+                    let contentlen = buf.contents.len();
+                    if buf.cursor_pos.line >= contentlen && !buf.contents.is_empty() {
+                        buf.cursor_pos.line = contentlen - 1;
+                    }
+                });
+                buf.mode = Mode::Default;
+                buf.vars
+                    .insert(String::from("ret-to-nav"), BimVar::Bool(false));
+                buf.temp_str.clear();
+                buf.update_highlighting();
+            }
             _ => {}
         },
         Mods::Alt => match key.code {
