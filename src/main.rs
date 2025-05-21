@@ -144,16 +144,16 @@ pub fn main() {
                     }
                 });
                 let modifiers = Mods::to_mods(has_alt, has_ctrl);
+                let return_mode = if let Some(BimVar::Bool(true)) = buf.vars.get("ret-to-nav") {
+                    Mode::Nav
+                } else {
+                    Mode::Default
+                };
                 if buf.mode == Mode::Nav {
                     if handle_nav(&mut buf, key, &modifiers, height, width) {
                         break 'ed;
                     }
                 } else {
-                    let return_mode = if let Some(BimVar::Bool(true)) = buf.vars.get("ret-to-nav") {
-                        Mode::Nav
-                    } else {
-                        Mode::Default
-                    };
                     match modifiers {
                         Mods::None => match key.code {
                             KeyCode::Esc => {

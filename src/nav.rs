@@ -315,6 +315,37 @@ pub fn handle_nav(
                 buf.temp_str.clear();
                 buf.update_highlighting();
             }
+            KeyCode::Char('y') => {
+                repeat_action!(buf, {
+                    buf.contents.insert(
+                        buf.cursor_pos.line,
+                        buf.contents[buf.cursor_pos.line].clone(),
+                    );
+                    buf.move_down();
+                });
+                buf.update_highlighting();
+            }
+            KeyCode::Char('A') => {
+                repeat_action!(buf, {
+                    if buf.cursor_pos.line + 1 < buf.contents.len() {
+                        buf.contents
+                            .swap(buf.cursor_pos.line, buf.cursor_pos.line + 1);
+                    }
+                    buf.move_down();
+                });
+                buf.update_highlighting();
+            }
+            KeyCode::Char('E') => {
+                repeat_action!(buf, {
+                    if buf.cursor_pos.line != 0 {
+                        buf.contents
+                            .swap(buf.cursor_pos.line, buf.cursor_pos.line - 1);
+                        buf.move_up();
+                    }
+                });
+                buf.update_highlighting();
+            }
+
             _ => {}
         },
         Mods::Alt => match key.code {
@@ -332,6 +363,20 @@ pub fn handle_nav(
                     }
                     buf.move_down();
                 });
+            }
+            KeyCode::Char('s') => {
+                buf.mode = Mode::Snippet;
+                buf.temp_str.clear();
+            }
+            KeyCode::Char('y') => {
+                if buf.mode != Mode::Copy {
+                    buf.mode = Mode::Copy;
+                    buf.temp_str.clear();
+                }
+                let numbuf = format!("{} ", buf.cursor_pos.line + 1);
+                for c in numbuf.chars() {
+                    buf.temp_str.push(c);
+                }
             }
             KeyCode::Char('e') => {
                 repeat_action!(buf, {
