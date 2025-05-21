@@ -13,7 +13,9 @@ impl Snippet for Clang {
         match query.trim() {
             "include" | "i" => &["#include <>"],
             "define" | "d" => &["#define "],
-            "stds" | "s" => &["#include <stdio.h>", "#include <stdlib.h>"],
+            "std" => &["#include <stdio.h>", "#include <stdlib.h>"],
+            "struct" => &["typedef struct {", "    type field;", "} name;"],
+            "enum" => &["typedef enum {", "    member,", "} name;"],
             _ => &[],
         }
     }
