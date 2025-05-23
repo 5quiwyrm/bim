@@ -1,7 +1,6 @@
 use crate::Mods;
 use crate::buffer::*;
 use crossterm::event::{self, KeyCode};
-
 pub const VIM_ITER_LIMIT: usize = 10000;
 
 macro_rules! repeat_action {
@@ -310,6 +309,8 @@ pub fn handle_nav(
                     }
                 });
                 buf.mode = Mode::Default;
+                buf.move_up();
+                buf.newline_below("");
                 buf.vars
                     .insert(String::from("ret-to-nav"), BimVar::Bool(false));
                 buf.temp_str.clear();
@@ -345,7 +346,32 @@ pub fn handle_nav(
                 });
                 buf.update_highlighting();
             }
-
+            KeyCode::Char('<') => {
+                if buf.indent_lvl != 0 {
+                    buf.indent_lvl -= 1;
+                    let indent_size = buf.lang.indent_size();
+                    if buf.cursor_pos.idx >= indent_size {
+                        buf.cursor_pos.idx -= indent_size;
+                    }
+                    let linelen = buf.contents[buf.cursor_pos.line].len();
+                    if buf.cursor_pos.idx > linelen {
+                        buf.cursor_pos.idx = linelen;
+                    }
+                }
+                buf.adjust_indent();
+            }
+            KeyCode::Char('>') => {
+                buf.indent_lvl += 1;
+                buf.cursor_pos.idx += buf.lang.indent_size();
+                buf.adjust_indent();
+                let linelen = buf.contents[buf.cursor_pos.line].len();
+                if buf.cursor_pos.idx > linelen {
+                    buf.cursor_pos.idx = linelen;
+                }
+            }
+            KeyCode::Char('s') => {
+                buf.save();
+            }
             _ => {}
         },
         Mods::Alt => match key.code {

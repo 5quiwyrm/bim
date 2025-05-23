@@ -526,30 +526,37 @@ impl Buffer {
             }
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
-                for content in content[self.cursor_pos.line].iter().take(truewidth) {
-                    let id = self.indent_lvl * indent_size;
+                let id = self.indent_lvl * indent_size;
+                for ctnt in content[self.cursor_pos.line].iter().take(truewidth) {
                     match i {
                         a if a == self.cursor_pos.idx => {
-                            _ = write!(&mut tb_printed, "\x1b[47m\x1b[30m{content}\x1b[0m");
+                            if self.mode != Mode::Nav {
+                                _ = write!(&mut tb_printed, "\x1b[47m\x1b[30m{}\x1b[0m", ctnt.ch);
+                            } else {
+                                _ = write!(&mut tb_printed, "\x1b[46m\x1b[30m{}\x1b[0m", ctnt.ch);
+                            }
                         }
                         b if b == id => {
-                            if content.ch == ' ' {
+                            if ctnt.ch == ' ' {
                                 _ = write!(&mut tb_printed, "\x1b[2;33m|\x1b[0m");
                             } else {
-                                _ = write!(&mut tb_printed, "\x1b[33m{content}\x1b[0m");
+                                _ = write!(&mut tb_printed, "\x1b[33m{}\x1b[0m", ctnt.ch);
                             }
                         }
                         _ => {
-                            _ = write!(&mut tb_printed, "{content}");
+                            _ = write!(&mut tb_printed, "{ctnt}");
                         }
                     }
                     i += 1;
                 }
                 while i < truewidth {
-                    let id = self.indent_lvl * indent_size;
                     match i {
                         a if a == self.cursor_pos.idx => {
-                            tb_printed.push_str("\x1b[47m\x1b[30m \x1b[0m");
+                            if self.mode != Mode::Nav {
+                                _ = write!(&mut tb_printed, "\x1b[47m\x1b[30m \x1b[0m");
+                            } else {
+                                _ = write!(&mut tb_printed, "\x1b[46m\x1b[30m \x1b[0m");
+                            }
                         }
                         b if b == id => {
                             tb_printed.push_str("\x1b[2;33m|\x1b[0m");
