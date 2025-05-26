@@ -219,7 +219,7 @@ impl Buffer {
         ]);
         let highlighted_contents = lang.highlight(&contents);
         Buffer {
-            contents: contents.clone(),
+            contents,
             highlighted_contents,
             iter_time: 0,
             top: 0,
@@ -333,7 +333,7 @@ impl Buffer {
                         self.contents.iter().map(|s| s.trim_end()).collect();
                     let mut writecontent = trimmedlines.join("\n");
                     writecontent.push('\n');
-                    _ = fs::write(self.filepath.clone(), writecontent);
+                    _ = fs::write(&self.filepath, writecontent);
                     _ = self
                         .vars
                         .insert(String::from("lastact"), BimVar::Str(String::from("save")));
