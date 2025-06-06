@@ -58,6 +58,14 @@ pub fn handle_nav(
                     }
                 }
             }
+            KeyCode::Char(n) if &buf.temp_str == "r" => {
+                buf.temp_str.clear();
+                buf.type_char(n);
+                if buf.move_right() {
+                    buf.backspace();
+                    buf.move_left();
+                }
+            }
             KeyCode::Char(n) if n.is_numeric() => {
                 buf.temp_str.push(n);
             }
@@ -83,6 +91,9 @@ pub fn handle_nav(
             }
             KeyCode::Char('f') => {
                 buf.temp_str.push('f');
+            }
+            KeyCode::Char('r') => {
+                buf.temp_str.push('r');
             }
             KeyCode::Char('h') => {
                 buf.contents[buf.cursor_pos.line].replace_range(
@@ -176,7 +187,7 @@ pub fn handle_nav(
                 buf.mode = Mode::Find;
                 buf.find_str.clear();
             }
-            KeyCode::Char('r') => {
+            KeyCode::Char('?') => {
                 buf.mode = Mode::ReplaceStr;
                 buf.replace_str.clear();
             }

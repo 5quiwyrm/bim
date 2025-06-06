@@ -435,13 +435,10 @@ impl Buffer {
         print!("\x1b[J\x1b[H");
         let (widthu, heightu) = terminal::size().expect("The terminal should have a size");
         let width = widthu as usize;
-        // the width calculations are wrong on posix
-        // uncomment the next line on posix:
-        // width -= 1;
+        let height = heightu as usize;
 
         let showbottombar = matches!(self.vars.get("showbottombar"), Some(BimVar::Bool(true)));
 
-        let height = heightu as usize;
         let mut bottom_pad = if showbottombar { 2 } else { 0 };
         if cfg!(feature = "profile") {
             bottom_pad += 1;
@@ -572,7 +569,9 @@ impl Buffer {
                 content[linectr].iter().take(truewidth).for_each(|c| {
                     _ = write!(&mut tb_printed, "{c}");
                 });
-                tb_printed.push('\n');
+                if cfg!(target_os = "windows") {
+                    tb_printed.push('\n');
+                }
             } else {
                 let mut i = 0;
                 for c in &content[linectr] {
@@ -583,7 +582,9 @@ impl Buffer {
                     tb_printed.push(' ');
                     i += 1;
                 }
-                tb_printed.push('\n');
+                if cfg!(target_os = "windows") {
+                    tb_printed.push('\n');
+                }
             }
             linectr += 1;
         }
@@ -592,7 +593,9 @@ impl Buffer {
             for _ in 0..width {
                 tb_printed.push(' ');
             }
-            tb_printed.push('\n');
+            if cfg!(target_os = "windows") {
+                tb_printed.push('\n');
+            }
             linesprinted += 1;
         }
 
@@ -620,8 +623,12 @@ impl Buffer {
             if bottom_bar.len() > width + escape_code_size {
                 bottom_bar.truncate(width + escape_code_size);
             }
-            _ = write!(&mut tb_printed, "{bottom_bar: <width$}\x1b[0m");
-            tb_printed.push('\n');
+            if cfg!(target_os = "windows") {
+                _ = write!(&mut tb_printed, "{bottom_bar: <width$}\x1b[0m");
+                tb_printed.push('\n');
+            } else {
+                _ = write!(&mut tb_printed, "{bottom_bar}\x1b[0m | ");
+            }
             _ = write!(
                 &mut tb_printed,
                 "{: <width$}",
