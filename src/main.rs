@@ -854,7 +854,7 @@ pub fn main() {
                                     buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
                             }
-                            KeyCode::Char('N') => {
+                            KeyCode::Char('N') | KeyCode::Char('v') => {
                                 buf.mode = Mode::Nav;
                                 buf.vars
                                     .insert(String::from("ret-to-nav"), BimVar::Bool(true));
@@ -863,6 +863,12 @@ pub fn main() {
                             _ => {}
                         },
                         Mods::Ctrl => match key.code {
+                            KeyCode::Char('N') => {
+                                buf.mode = Mode::Nav;
+                                buf.vars
+                                    .insert(String::from("ret-to-nav"), BimVar::Bool(true));
+                                buf.temp_str.clear();
+                            }
                             KeyCode::Char('r') => {
                                 buf.reload_file();
                                 buf.cursor_pos.line = 0;

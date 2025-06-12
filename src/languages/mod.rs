@@ -73,6 +73,9 @@ use todo::*;
 pub mod c;
 use c::*;
 
+pub mod zig;
+use zig::*;
+
 // Update get_lang if you added a new language
 
 pub fn get_lang(path: &str) -> Box<dyn Language> {
@@ -90,6 +93,8 @@ pub fn get_lang(path: &str) -> Box<dyn Language> {
         Box::new(TODO)
     } else if CLANG.is_kind(path) {
         Box::new(CLANG)
+    } else if ZIG.is_kind(path) {
+        Box::new(ZIG)
     } else {
         Box::new(TEXT)
     }

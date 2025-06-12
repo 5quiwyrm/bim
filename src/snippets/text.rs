@@ -8,8 +8,8 @@ impl Snippet for Text {
     fn is_kind(&self, _filepath: &str) -> bool {
         true
     }
-    fn query(&self, _query: &str) -> &[&str] {
-        &[]
+    fn query(&self, _query: &str) -> Vec<String> {
+        Vec::new()
     }
     fn display_str(&self) -> &'static str {
         "Text"

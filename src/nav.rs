@@ -29,12 +29,6 @@ pub fn handle_nav(
 ) -> bool {
     match modifiers {
         Mods::None => match key.code {
-            KeyCode::Esc | KeyCode::Char('q') => {
-                buf.mode = Mode::Default;
-                buf.vars
-                    .insert(String::from("ret-to-nav"), BimVar::Bool(false));
-                buf.temp_str.clear();
-            }
             KeyCode::Home | KeyCode::Char('0') if buf.temp_str.is_empty() => {
                 buf.cursor_pos.idx = 0;
             }
@@ -66,8 +60,43 @@ pub fn handle_nav(
                     buf.move_left();
                 }
             }
+            KeyCode::Char(n) if &buf.temp_str == "x" => {
+                let did_anything = match n {
+                    'c' => {
+                        if buf.move_right() {
+                            buf.backspace();
+                        }
+                        true
+                    }
+                    'w' => {
+                        'del: loop {
+                            if buf.move_right() {
+                                if buf.backspace().unwrap_or(' ').is_whitespace() {
+                                    break 'del;
+                                }
+                            } else {
+                                break 'del;
+                            }
+                        }
+                        true
+                    }
+                    _ => false,
+                };
+                if did_anything {
+                    buf.mode = Mode::Default;
+                    buf.vars
+                        .insert(String::from("ret-to-nav"), BimVar::Bool(false));
+                }
+                buf.temp_str.clear();
+            }
             KeyCode::Char(n) if n.is_numeric() => {
                 buf.temp_str.push(n);
+            }
+            KeyCode::Esc | KeyCode::Char('q') => {
+                buf.mode = Mode::Default;
+                buf.vars
+                    .insert(String::from("ret-to-nav"), BimVar::Bool(false));
+                buf.temp_str.clear();
             }
             KeyCode::Char('c') => {
                 repeat_action!(buf, {
@@ -94,6 +123,9 @@ pub fn handle_nav(
             }
             KeyCode::Char('r') => {
                 buf.temp_str.push('r');
+            }
+            KeyCode::Char('x') => {
+                buf.temp_str.push('x');
             }
             KeyCode::Char('h') => {
                 buf.contents[buf.cursor_pos.line].replace_range(
@@ -382,6 +414,9 @@ pub fn handle_nav(
             }
             KeyCode::Char('s') => {
                 buf.save();
+            }
+            KeyCode::Char('_') => {
+                buf.temp_str.clear();
             }
             _ => {}
         },

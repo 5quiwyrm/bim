@@ -9,11 +9,11 @@ impl Snippet for Todo {
     fn is_kind(&self, filepath: &str) -> bool {
         filepath.ends_with(".todo")
     }
-    fn query(&self, query: &str) -> &[&str] {
+    fn query(&self, query: &str) -> Vec<String> {
         match query.trim() {
-            "newtask" | "n" => &["[ ] "],
-            "asap" | "a" => &["[ ]!"],
-            _ => &[],
+            "newtask" | "n" => vec!["[ ] ".to_string()],
+            "asap" | "a" => vec!["[ ]!".to_string()],
+            _ => vec![],
         }
     }
     fn display_str(&self) -> &'static str {
