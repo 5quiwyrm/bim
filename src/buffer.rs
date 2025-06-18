@@ -438,6 +438,7 @@ impl Buffer {
         let height = heightu as usize;
 
         let showbottombar = matches!(self.vars.get("showbottombar"), Some(BimVar::Bool(true)));
+        let ruler_idx = 80;
 
         let mut bottom_pad = if showbottombar { 2 } else { 0 };
         if cfg!(feature = "profile") {
@@ -540,6 +541,13 @@ impl Buffer {
                                 _ = write!(&mut tb_printed, "\x1b[33m{}\x1b[0m", ctnt.ch);
                             }
                         }
+                        c if c == ruler_idx => {
+                            if ctnt.ch == ' ' {
+                                _ = write!(&mut tb_printed, "\x1b[2;31m|\x1b[0m");
+                            } else {
+                                _ = write!(&mut tb_printed, "\x1b[31m{}\x1b[0m", ctnt.ch);
+                            }
+                        }
                         _ => {
                             _ = write!(&mut tb_printed, "{ctnt}");
                         }
@@ -557,6 +565,9 @@ impl Buffer {
                         }
                         b if b == id => {
                             tb_printed.push_str("\x1b[2;33m|\x1b[0m");
+                        }
+                        c if c == ruler_idx => {
+                            _ = tb_printed.push_str("\x1b[2;31m|\x1b[0m");
                         }
                         _ => {
                             tb_printed.push(' ');
