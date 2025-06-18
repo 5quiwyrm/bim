@@ -19,7 +19,10 @@ impl Language for Todo {
                             "[ ] " => "\x1b[33m",
                             "[ ]!" => "\x1b[31m",
                             "[ ]~" => "\x1b[36m",
-                            "[V] " | "[V]!" | "[V]~" => "\x1b[32m",
+                            "[ ]P" => "\x1b[35m",
+                            x if (x.starts_with("[V]")) => "\x1b[32m",
+                            x if (x.starts_with('>')) => "",
+                            x if (x.starts_with('$')) => "\x1b[3m",
                             _ => "\x1b[2m",
                         }
                     } else {

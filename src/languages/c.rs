@@ -10,7 +10,9 @@ pub struct Clang {}
 pub const CLANG: Clang = Clang {};
 impl Language for Clang {
     fn is_kind(&self, filepath: &str) -> bool {
-        filepath.ends_with(".c") || filepath.ends_with(".cpp")
+        filepath.ends_with(".c")
+            || filepath.ends_with(".cpp")
+            || filepath.ends_with(".h")
     }
     fn highlight(&self, buffer: &[String]) -> Vec<Vec<StyledChar>> {
         buffer.iter().map(|l| StyledChar::from_string(l)).collect()
