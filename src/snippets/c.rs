@@ -7,7 +7,9 @@ pub const CLANG: Clang = Clang {};
 
 impl Snippet for Clang {
     fn is_kind(&self, filepath: &str) -> bool {
-        filepath.ends_with(".c") || filepath.ends_with(".cpp")
+        filepath.ends_with(".c")
+            || filepath.ends_with(".cpp")
+            || filepath.ends_with(".h")
     }
     fn query(&self, query: &str) -> Vec<String> {
         match query.trim() {

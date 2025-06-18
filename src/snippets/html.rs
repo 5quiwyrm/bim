@@ -5,8 +5,8 @@ use crate::snippets::Snippet;
 pub struct Html {}
 pub const HTML: Html = Html {};
 impl Snippet for Html {
-    fn is_kind(&self, _filepath: &str) -> bool {
-        true
+    fn is_kind(&self, filepath: &str) -> bool {
+        filepath.ends_with(".html")
     }
     fn query(&self, query: &str) -> Vec<String> {
         match query.trim() {
