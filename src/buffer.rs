@@ -151,7 +151,7 @@ pub struct Alert {
     pub time: u128,
 }
 
-pub const TIMEOUT: u128 = 5_000_000;
+pub const TIMEOUT: u128 = 1_000_000;
 
 impl Alert {
     pub fn new(contents: &[String]) -> Alert {
@@ -165,8 +165,8 @@ impl Alert {
 
     pub fn check(self: &Alert) -> bool {
         match time::SystemTime::now().duration_since(time::UNIX_EPOCH) {
-            Ok(t) => t.as_micros() - self.time > TIMEOUT,
-            Err(_) => false,
+            Ok(t) => (t.as_micros() - self.time) > TIMEOUT,
+            Err(_) => true,
         }
     }
 }
@@ -231,7 +231,6 @@ impl Buffer {
             snippets::get_snippets(filepath)
         };
         let initvars = HashMap::from([
-            ("lastact".to_string(), BimVar::Str(String::new())),
             ("showbottombar".to_string(), BimVar::Bool(true)),
             (
                 "line-num-type".to_string(),
@@ -361,9 +360,9 @@ impl Buffer {
                     let mut writecontent = trimmedlines.join("\n");
                     writecontent.push('\n');
                     _ = fs::write(&self.filepath, writecontent);
-                    _ = self
-                        .vars
-                        .insert(String::from("lastact"), BimVar::Str(String::from("save")));
+                    self.alert = Alert::new(&[
+                        "save".to_string(),
+                    ]);
                 }
             }
         }
@@ -648,10 +647,13 @@ impl Buffer {
                 tb_printed.push('\n');
             }
         }
+        if !self.alert.contents.is_empty() && self.alert.check() {
+            self.alert = Alert::new(&[]);
+        }
 
         if showbottombar {
             let mut bottom_bar = format!(
-                "[{}] {}{}(act: {}) [{}; {}] ({: <12} fps) {}",
+                "[{}] {}{}[{}; {}] ({: <12} fps) {}",
                 self.filepath,
                 if self.find_str.is_empty() {
                     String::new()
@@ -663,7 +665,6 @@ impl Buffer {
                 } else {
                     format!("(-> {:?}) ", self.replace_str)
                 },
-                self.vars.get("lastact").unwrap(),
                 self.lang.display_str(),
                 self.snippets.display_str(),
                 style_time(self.iter_time),
