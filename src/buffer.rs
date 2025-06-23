@@ -567,7 +567,7 @@ impl Buffer {
                             tb_printed.push_str("\x1b[2;33m|\x1b[0m");
                         }
                         c if c == ruler_idx => {
-                            _ = tb_printed.push_str("\x1b[2;31m|\x1b[0m");
+                            tb_printed.push_str("\x1b[2;31m|\x1b[0m");
                         }
                         _ => {
                             tb_printed.push(' ');

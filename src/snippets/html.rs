@@ -10,23 +10,21 @@ impl Snippet for Html {
     }
     fn query(&self, query: &str) -> Vec<String> {
         match query.trim() {
-            "init" => { vec![
-                "<!DOCTYPE html>".to_string(),
-                "<html lang=\"en\">".to_string(),
-                "  <head>".to_string(),
-                "    <meta charset=\"utf-8\">".to_string(),
-                "    <title>title</title>".to_string(),
-                "  </head>".to_string(),
-                "  <body>".to_string(),
-                "    <!-- page content -->".to_string(),
-                "  </body>".to_string(),
-                "</html>".to_string(),
-            ]},
-            q => vec![
-                format!("<{}>", q),
-                "    ".to_string(),
-                format!("</{}>", q),
-            ]
+            "init" => {
+                vec![
+                    "<!DOCTYPE html>".to_string(),
+                    "<html lang=\"en\">".to_string(),
+                    "  <head>".to_string(),
+                    "    <meta charset=\"utf-8\">".to_string(),
+                    "    <title>title</title>".to_string(),
+                    "  </head>".to_string(),
+                    "  <body>".to_string(),
+                    "    <!-- page content -->".to_string(),
+                    "  </body>".to_string(),
+                    "</html>".to_string(),
+                ]
+            }
+            q => vec![format!("<{}>", q), "    ".to_string(), format!("</{}>", q)],
         }
     }
     fn display_str(&self) -> &'static str {
