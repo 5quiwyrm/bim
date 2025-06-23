@@ -7,6 +7,7 @@ use std::{
     collections::HashMap,
     fmt::{self, Write},
     fs,
+    time,
 };
 
 /// Prettifies events to string for printing.
@@ -145,6 +146,31 @@ impl fmt::Display for BimVar {
     }
 }
 
+pub struct Alert {
+    pub contents: Vec<String>,
+    pub time: u128,
+}
+
+pub const TIMEOUT: u128 = 1_000_000;
+
+impl Alert {
+    pub fn new(contents: &[String]) -> Alert {
+        Alert {
+            contents: Vec::from(contents),
+            time: time::SystemTime::now()
+                    .duration_since(time::UNIX_EPOCH)
+                    .unwrap().as_micros()
+        }
+    }
+
+    pub fn check(self: &Alert) -> bool {
+        match time::SystemTime::now().duration_since(time::UNIX_EPOCH) {
+            Ok(t) => (t.as_micros() - self.time) > TIMEOUT,
+            Err(_) => true,
+        }
+    }
+}
+
 /// Structure for storing the current displayed buffer.
 pub struct Buffer {
     /// Contents of the file, as lines. This is what is modified.
@@ -165,8 +191,6 @@ pub struct Buffer {
     pub replace_str: String,
     /// Temporary buffer for all purposes.
     pub temp_str: String,
-    /// Hashmap containing the locations of marks.
-    pub marklist: HashMap<char, Cursor>,
     /// Current indent level. This is language agnostic.
     pub indent_lvl: usize,
     /// Current language. Used for determining indent size and highlighting.
@@ -175,6 +199,8 @@ pub struct Buffer {
     pub snippets: Box<dyn snippets::Snippet>,
     /// Local vars.
     pub vars: HashMap<String, BimVar>,
+    /// Alert message.
+    pub alert: Alert,
     /// Current mode.
     pub mode: Mode,
 }
@@ -205,7 +231,6 @@ impl Buffer {
             snippets::get_snippets(filepath)
         };
         let initvars = HashMap::from([
-            ("lastact".to_string(), BimVar::Str(String::new())),
             ("showbottombar".to_string(), BimVar::Bool(true)),
             (
                 "line-num-type".to_string(),
@@ -218,6 +243,7 @@ impl Buffer {
             ),
         ]);
         let highlighted_contents = lang.highlight(&contents);
+        let alert = Alert::new(&[]);
         Buffer {
             contents,
             highlighted_contents,
@@ -229,10 +255,10 @@ impl Buffer {
             find_str: String::new(),
             replace_str: String::new(),
             temp_str: String::new(),
-            marklist: HashMap::new(),
             indent_lvl: 0,
             lang,
             snippets,
+            alert,
             mode: Mode::Nav,
         }
     }
@@ -334,9 +360,9 @@ impl Buffer {
                     let mut writecontent = trimmedlines.join("\n");
                     writecontent.push('\n');
                     _ = fs::write(&self.filepath, writecontent);
-                    _ = self
-                        .vars
-                        .insert(String::from("lastact"), BimVar::Str(String::from("save")));
+                    self.alert = Alert::new(&[
+                        "save".to_string(),
+                    ]);
                 }
             }
         }
@@ -444,6 +470,7 @@ impl Buffer {
         if cfg!(feature = "profile") {
             bottom_pad += 1;
         }
+        bottom_pad += self.alert.contents.len();
         if self.cursor_pos.line > self.top + height - bottom_pad - 3 {
             self.top = self.cursor_pos.line + bottom_pad + 3 - height;
         }
@@ -610,9 +637,23 @@ impl Buffer {
             linesprinted += 1;
         }
 
+        for line in &self.alert.contents {
+            _ = write!(
+                &mut tb_printed,
+                "\x1b[47m\x1b[30m{: <width$}\x1b[0m",
+                line.chars().take(width).collect::<String>(),
+            );
+            if cfg!(target_os = "windows") {
+                tb_printed.push('\n');
+            }
+        }
+        if !self.alert.contents.is_empty() && self.alert.check() {
+            self.alert = Alert::new(&[]);
+        }
+
         if showbottombar {
             let mut bottom_bar = format!(
-                "[{}] {}{}(act: {}) [{}; {}] ({: <12} fps) {}",
+                "[{}] {}{}[{}; {}] ({: <12} fps) {}",
                 self.filepath,
                 if self.find_str.is_empty() {
                     String::new()
@@ -624,7 +665,6 @@ impl Buffer {
                 } else {
                     format!("(-> {:?}) ", self.replace_str)
                 },
-                self.vars.get("lastact").unwrap(),
                 self.lang.display_str(),
                 self.snippets.display_str(),
                 style_time(self.iter_time),

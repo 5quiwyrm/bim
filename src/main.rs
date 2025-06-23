@@ -206,10 +206,9 @@ pub fn main() {
                                                 }
                                             }
                                         } else {
-                                            _ = buf.vars.insert(
-                                                String::from("lastact"),
-                                                BimVar::Str(String::from("Inval line num")),
-                                            );
+                                            buf.alert = Alert::new(&[
+                                                String::from("Inval line num"),
+                                            ]);
                                         }
                                         buf.temp_str.clear();
                                         buf.mode = return_mode;
@@ -222,28 +221,25 @@ pub fn main() {
                                                 let f = match linenums[0].parse::<usize>() {
                                                     Ok(o) if o <= buf.contents.len() => o,
                                                     _ => {
-                                                        _ = buf.vars.insert(
-                                                            String::from("lastact"),
-                                                            BimVar::Str(String::from("Inval from")),
-                                                        );
+                                                        buf.alert = Alert::new(&[
+                                                            String::from("Inval from"),
+                                                        ]);
                                                         break 'cpy;
                                                     }
                                                 };
                                                 let t = match linenums[1].parse::<usize>() {
                                                     Ok(o) if o <= buf.contents.len() => o,
                                                     _ => {
-                                                        _ = buf.vars.insert(
-                                                            String::from("lastact"),
-                                                            BimVar::Str(String::from("Inval to")),
-                                                        );
+                                                        buf.alert = Alert::new(&[
+                                                            String::from("Inval to"),
+                                                        ]);
                                                         break 'cpy;
                                                     }
                                                 };
                                                 if f > t || f == 0 {
-                                                    _ = buf.vars.insert(
-                                                        String::from("lastact"),
-                                                        BimVar::Str(String::from("assert: f <= t")),
-                                                    );
+                                                    buf.alert = Alert::new(&[
+                                                        String::from("assert: f <= t"),
+                                                    ]);
                                                     break 'cpy;
                                                 }
 
@@ -257,13 +253,12 @@ pub fn main() {
                                                 }
                                                 buf.update_highlighting();
                                             } else {
-                                                _ = buf.vars.insert(
-                                                    String::from("lastact"),
-                                                    BimVar::Str(format!(
+                                                buf.alert = Alert::new(&[
+                                                    format!(
                                                         "{} args given, 2 expected",
                                                         linenums.len()
-                                                    )),
-                                                );
+                                                    ),
+                                                ]);
                                             }
                                         }
                                         buf.temp_str.clear();
@@ -277,28 +272,25 @@ pub fn main() {
                                                 let f = match linenums[0].parse::<usize>() {
                                                     Ok(o) if o <= buf.contents.len() => o,
                                                     _ => {
-                                                        _ = buf.vars.insert(
-                                                            String::from("lastact"),
-                                                            BimVar::Str(String::from("Inval from")),
-                                                        );
+                                                        buf.alert = Alert::new(&[
+                                                            String::from("Inval from"),
+                                                        ]);
                                                         break 'kl;
                                                     }
                                                 };
                                                 let t = match linenums[1].parse::<usize>() {
                                                     Ok(o) if o <= buf.contents.len() => o,
                                                     _ => {
-                                                        _ = buf.vars.insert(
-                                                            String::from("lastact"),
-                                                            BimVar::Str(String::from("Inval to")),
-                                                        );
+                                                        buf.alert = Alert::new(&[
+                                                            String::from("Inval to"),
+                                                        ]);
                                                         break 'kl;
                                                     }
                                                 };
                                                 if f > t || f == 0 {
-                                                    _ = buf.vars.insert(
-                                                        String::from("lastact"),
-                                                        BimVar::Str(String::from("assert: f <= t")),
-                                                    );
+                                                    buf.alert = Alert::new(&[
+                                                        String::from("assert: f <= t"),
+                                                    ]);
                                                     break 'kl;
                                                 }
 
@@ -317,13 +309,12 @@ pub fn main() {
                                                 }
                                                 buf.update_highlighting();
                                             } else {
-                                                _ = buf.vars.insert(
-                                                    String::from("lastact"),
-                                                    BimVar::Str(format!(
+                                                buf.alert = Alert::new(&[
+                                                    format!(
                                                         "{} args given, 2 expected",
                                                         linenums.len()
-                                                    )),
-                                                );
+                                                    )
+                                                ]);
                                             }
                                         }
                                         buf.temp_str.clear();
@@ -641,31 +632,6 @@ pub fn main() {
                                     buf.contents.insert(0, String::new());
                                     buf.cursor_pos.idx = 0;
                                     buf.update_highlighting();
-                                }
-                            }
-                            KeyCode::Char('m') => {
-                                buf.move_left();
-                                if let Some(markchar) = buf.contents[buf.cursor_pos.line]
-                                    .chars()
-                                    .nth(buf.cursor_pos.idx)
-                                {
-                                    _ = buf.marklist.insert(markchar, buf.cursor_pos);
-                                }
-                                buf.move_right();
-                                buf.backspace();
-                            }
-                            KeyCode::Char('g') => {
-                                buf.move_left();
-                                if let Some(markchar) = buf.contents[buf.cursor_pos.line]
-                                    .chars()
-                                    .nth(buf.cursor_pos.idx)
-                                {
-                                    buf.move_right();
-                                    buf.backspace();
-                                    if let Some(&loc) = buf.marklist.get(&markchar) {
-                                        _ = buf.marklist.insert('_', buf.cursor_pos);
-                                        buf.cursor_pos = loc;
-                                    }
                                 }
                             }
                             KeyCode::Char('x' | 'M') => {
