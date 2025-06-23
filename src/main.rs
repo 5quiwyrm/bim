@@ -643,31 +643,6 @@ pub fn main() {
                                     buf.update_highlighting();
                                 }
                             }
-                            KeyCode::Char('m') => {
-                                buf.move_left();
-                                if let Some(markchar) = buf.contents[buf.cursor_pos.line]
-                                    .chars()
-                                    .nth(buf.cursor_pos.idx)
-                                {
-                                    _ = buf.marklist.insert(markchar, buf.cursor_pos);
-                                }
-                                buf.move_right();
-                                buf.backspace();
-                            }
-                            KeyCode::Char('g') => {
-                                buf.move_left();
-                                if let Some(markchar) = buf.contents[buf.cursor_pos.line]
-                                    .chars()
-                                    .nth(buf.cursor_pos.idx)
-                                {
-                                    buf.move_right();
-                                    buf.backspace();
-                                    if let Some(&loc) = buf.marklist.get(&markchar) {
-                                        _ = buf.marklist.insert('_', buf.cursor_pos);
-                                        buf.cursor_pos = loc;
-                                    }
-                                }
-                            }
                             KeyCode::Char('x' | 'M') => {
                                 buf.mode = Mode::Switch;
                                 buf.temp_str.clear();
