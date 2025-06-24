@@ -208,7 +208,7 @@ pub fn main() {
                                         } else {
                                             buf.alert = Alert::new(&[
                                                 String::from("Inval line num"),
-                                            ]);
+                                            ], 1_000_000);
                                         }
                                         buf.temp_str.clear();
                                         buf.mode = return_mode;
@@ -223,7 +223,7 @@ pub fn main() {
                                                     _ => {
                                                         buf.alert = Alert::new(&[
                                                             String::from("Inval from"),
-                                                        ]);
+                                                        ], 1_000_000);
                                                         break 'cpy;
                                                     }
                                                 };
@@ -232,14 +232,14 @@ pub fn main() {
                                                     _ => {
                                                         buf.alert = Alert::new(&[
                                                             String::from("Inval to"),
-                                                        ]);
+                                                        ], 1_000_000);
                                                         break 'cpy;
                                                     }
                                                 };
                                                 if f > t || f == 0 {
                                                     buf.alert = Alert::new(&[
                                                         String::from("assert: f <= t"),
-                                                    ]);
+                                                    ], 1_000_000);
                                                     break 'cpy;
                                                 }
 
@@ -258,7 +258,7 @@ pub fn main() {
                                                         "{} args given, 2 expected",
                                                         linenums.len()
                                                     ),
-                                                ]);
+                                                ], 1_000_000);
                                             }
                                         }
                                         buf.temp_str.clear();
@@ -274,7 +274,7 @@ pub fn main() {
                                                     _ => {
                                                         buf.alert = Alert::new(&[
                                                             String::from("Inval from"),
-                                                        ]);
+                                                        ], 1_000_000);
                                                         break 'kl;
                                                     }
                                                 };
@@ -283,14 +283,14 @@ pub fn main() {
                                                     _ => {
                                                         buf.alert = Alert::new(&[
                                                             String::from("Inval to"),
-                                                        ]);
+                                                        ], 1_000_000);
                                                         break 'kl;
                                                     }
                                                 };
                                                 if f > t || f == 0 {
                                                     buf.alert = Alert::new(&[
                                                         String::from("assert: f <= t"),
-                                                    ]);
+                                                    ], 1_000_000);
                                                     break 'kl;
                                                 }
 
@@ -314,7 +314,7 @@ pub fn main() {
                                                         "{} args given, 2 expected",
                                                         linenums.len()
                                                     )
-                                                ]);
+                                                ], 1_000_000);
                                             }
                                         }
                                         buf.temp_str.clear();
@@ -337,6 +337,11 @@ pub fn main() {
                                     }
                                     Mode::Snippet => {
                                         let sniplines = buf.snippets.query(&buf.temp_str);
+                                        if sniplines.is_empty() {
+                                            buf.alert = Alert::new(&[
+                                                "Invalid request".to_string()
+                                            ], 1_000_000);
+                                        }
                                         for (i, l) in sniplines.iter().enumerate() {
                                             let mut ins_line = String::new();
                                             for _ in 0..buf.lang.indent_size() * buf.indent_lvl {

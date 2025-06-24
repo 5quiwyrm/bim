@@ -149,23 +149,23 @@ impl fmt::Display for BimVar {
 pub struct Alert {
     pub contents: Vec<String>,
     pub time: u128,
+    pub timeout: u128,
 }
 
-pub const TIMEOUT: u128 = 1_000_000;
-
 impl Alert {
-    pub fn new(contents: &[String]) -> Alert {
+    pub fn new(contents: &[String], timeout: u128) -> Alert {
         Alert {
             contents: Vec::from(contents),
             time: time::SystemTime::now()
                     .duration_since(time::UNIX_EPOCH)
-                    .unwrap().as_micros()
+                    .unwrap().as_micros(),
+            timeout,
         }
     }
 
     pub fn check(self: &Alert) -> bool {
         match time::SystemTime::now().duration_since(time::UNIX_EPOCH) {
-            Ok(t) => (t.as_micros() - self.time) > TIMEOUT,
+            Ok(t) => (t.as_micros() - self.time) > self.timeout,
             Err(_) => true,
         }
     }
@@ -243,7 +243,7 @@ impl Buffer {
             ),
         ]);
         let highlighted_contents = lang.highlight(&contents);
-        let alert = Alert::new(&[]);
+        let alert = Alert::new(&[], 1_000_000);
         Buffer {
             contents,
             highlighted_contents,
@@ -362,7 +362,7 @@ impl Buffer {
                     _ = fs::write(&self.filepath, writecontent);
                     self.alert = Alert::new(&[
                         "save".to_string(),
-                    ]);
+                    ], 1_000_000);
                 }
             }
         }
@@ -648,7 +648,7 @@ impl Buffer {
             }
         }
         if !self.alert.contents.is_empty() && self.alert.check() {
-            self.alert = Alert::new(&[]);
+            self.alert = Alert::new(&[], 1_000_000);
         }
 
         if showbottombar {
