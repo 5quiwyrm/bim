@@ -171,6 +171,11 @@ impl Alert {
     }
 }
 
+pub struct BufferHistory {
+    pub hist: Vec<String>,
+    pub head: usize,
+}
+
 /// Structure for storing the current displayed buffer.
 pub struct Buffer {
     /// Contents of the file, as lines. This is what is modified.
@@ -199,6 +204,8 @@ pub struct Buffer {
     pub snippets: Box<dyn snippets::Snippet>,
     /// Local vars.
     pub vars: HashMap<String, BimVar>,
+    /// Buffer history.
+    pub buffer_history: BufferHistory,
     /// Alert message.
     pub alert: Alert,
     /// Current mode.
@@ -244,6 +251,10 @@ impl Buffer {
         ]);
         let highlighted_contents = lang.highlight(&contents);
         let alert = Alert::new(&[], 1_000_000);
+        let buffer_history = BufferHistory {
+            hist: vec![filepath.to_string()],
+            head: 0,
+        };
         Buffer {
             contents,
             highlighted_contents,
@@ -259,6 +270,7 @@ impl Buffer {
             lang,
             snippets,
             alert,
+            buffer_history,
             mode: Mode::Nav,
         }
     }
@@ -637,7 +649,10 @@ impl Buffer {
             linesprinted += 1;
         }
 
-        for line in &self.alert.contents {
+        'count: for (ctr, line) in self.alert.contents.iter().enumerate() {
+            if ctr > 16 {
+                break 'count;
+            }
             _ = write!(
                 &mut tb_printed,
                 "\x1b[47m\x1b[30m{: <width$}\x1b[0m",

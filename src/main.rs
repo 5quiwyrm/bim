@@ -322,6 +322,8 @@ pub fn main() {
                                     }
                                     Mode::OpenFile => {
                                         buf.save();
+                                        buf.buffer_history.hist.push(buf.temp_str.clone());
+                                        buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
                                         buf.filepath = buf.temp_str.clone();
                                         buf.reload_file();
                                         buf.mode = return_mode;
@@ -831,6 +833,9 @@ pub fn main() {
                                     .insert(String::from("ret-to-nav"), BimVar::Bool(true));
                                 buf.temp_str.clear();
                             }
+                            KeyCode::Char('-') => {
+                                buf.alert = Alert::new(&[], 1_000_000);
+                            }
                             _ => {}
                         },
                         Mods::Ctrl => match key.code {
@@ -886,6 +891,78 @@ pub fn main() {
                                     buf.top -= 1;
                                 }
                                 buf.move_up();
+                            }
+                            KeyCode::Char('b') => {
+                                let mut ret: Vec<String> = vec![];
+                                for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
+                                    if idx == buf.buffer_history.head {
+                                        ret.push(format!("> {s}"));
+                                    } else {
+                                        ret.push(format!("  {s}"));
+                                    }
+                                }
+                                buf.alert = Alert::new(
+                                    &ret,
+                                    5_000_000,
+                                );
+                            }
+                            KeyCode::Char('p') => {
+                                if buf.buffer_history.head > 0 {
+                                    buf.buffer_history.head -= 1;
+                                    buf.save();
+                                    buf.filepath = buf.buffer_history.hist[buf.buffer_history.head].clone();
+                                    buf.reload_file();
+                                    if buf.cursor_pos.line >= buf.contents.len() {
+                                        buf.cursor_pos.line = buf.contents.len() - 1;
+                                    }
+                                    if buf.cursor_pos.idx
+                                        > buf.contents[buf.cursor_pos.line].len()
+                                    {
+                                        buf.cursor_pos.idx =
+                                            buf.contents[buf.cursor_pos.line].len();
+                                    }
+                                    let mut ret = vec![];
+                                    for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
+                                        if idx == buf.buffer_history.head {
+                                            ret.push(format!("> {s}"));
+                                        } else {
+                                            ret.push(format!("  {s}"));
+                                        }
+                                    }
+                                    buf.alert = Alert::new(
+                                        &ret,
+                                        500_000,
+                                    );
+                                }
+                            }
+                            KeyCode::Char('n') => {
+                                if buf.buffer_history.head + 1 < buf.buffer_history.hist.len() {
+                                    buf.buffer_history.head += 1;
+                                    buf.save();
+                                    buf.filepath = buf.buffer_history.hist[buf.buffer_history.head].clone();
+                                    buf.reload_file();
+                                    if buf.cursor_pos.line >= buf.contents.len() {
+                                        buf.cursor_pos.line = buf.contents.len() - 1;
+                                    }
+                                    if buf.cursor_pos.idx
+                                        > buf.contents[buf.cursor_pos.line].len()
+                                    {
+                                        buf.cursor_pos.idx =
+                                            buf.contents[buf.cursor_pos.line].len();
+                                    }
+                                    let mut ret = vec![];
+                                    for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
+                                        if idx == buf.buffer_history.head {
+                                            ret.push(format!("> {s}"));
+                                        } else {
+                                            ret.push(format!("  {s}"));
+                                        }
+                                    }
+                                    buf.alert = Alert::new(
+                                        &ret,
+                                        500_000,
+                                    );
+                                }
                             }
                             _ => {}
                         },
