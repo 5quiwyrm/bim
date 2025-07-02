@@ -76,6 +76,9 @@ use c::*;
 pub mod zig;
 use zig::*;
 
+pub mod go;
+use go::*;
+
 // Update get_lang if you added a new language
 
 pub fn get_lang(path: &str) -> Box<dyn Language> {
@@ -95,6 +98,8 @@ pub fn get_lang(path: &str) -> Box<dyn Language> {
         Box::new(CLANG)
     } else if ZIG.is_kind(path) {
         Box::new(ZIG)
+    } else if GOLANG.is_kind(path) {
+        Box::new(GOLANG)
     } else {
         Box::new(TEXT)
     }

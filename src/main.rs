@@ -119,6 +119,10 @@ pub fn main() {
     } else {
         String::from("scratch")
     };
+    if path.ends_with(".exe") {
+        println!("You shouldn't do this");
+        return;
+    }
     let mut buf = Buffer::new(&path);
     print!("\x1bc\x1b[?25l");
     _ = terminal::enable_raw_mode();
@@ -354,6 +358,9 @@ pub fn main() {
                                                 .insert(buf.cursor_pos.line + i + 1, ins_line);
                                         }
                                         buf.update_highlighting();
+                                        buf.mode = return_mode;
+                                    }
+                                    Mode::Tee => {
                                         buf.mode = return_mode;
                                     }
                                     _ => {
@@ -835,6 +842,10 @@ pub fn main() {
                             }
                             KeyCode::Char('-') => {
                                 buf.alert = Alert::new(&[], 1_000_000);
+                            }
+                            KeyCode::Char('T') => {
+                                buf.mode = Mode::Tee;
+                                buf.replace_str.clear();
                             }
                             _ => {}
                         },

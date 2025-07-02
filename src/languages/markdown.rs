@@ -43,7 +43,7 @@ impl Language for Markdown {
         ret_buf
     }
     fn indent_size(&self) -> usize {
-        4
+        2
     }
     fn display_str(&self) -> &'static str {
         "Markdown"

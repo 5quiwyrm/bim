@@ -57,6 +57,8 @@ pub enum Mode {
     Snippet,
     /// Navigation mode.
     Nav,
+    /// Tee mode.
+    Tee,
     /// Mode switching mode.
     Switch,
 }
@@ -76,6 +78,7 @@ impl Mode {
             "copy" | "c" => Mode::Copy,
             "snippet" | "sn" => Mode::Snippet,
             "killlines" | "kl" | "k" => Mode::KillLines,
+            "tee" | "t" => Mode::Tee,
             "nav" | "n" => Mode::Nav,
             _ => Mode::Default,
         }
@@ -96,6 +99,7 @@ impl fmt::Display for Mode {
             Mode::Snippet => write!(f, "snippet request"),
             Mode::KillLines => write!(f, "Killing lines (from -> to)"),
             Mode::Nav => write!(f, "nav :"),
+            Mode::Tee => write!(f, "tee"),
             Mode::Switch => write!(f, "switch to mode"),
         }
     }
@@ -106,7 +110,7 @@ impl Mode {
     pub fn show_temp(self) -> bool {
         use Mode::*;
         match self {
-            Default | Paste | Replace | Find | ReplaceStr => false,
+            Default | Paste | Replace | Find | ReplaceStr | Tee => false,
             Goto | Switch | OpenFile | Copy | Snippet | KillLines | Nav => true,
         }
     }
@@ -382,6 +386,9 @@ impl Buffer {
 
     pub fn backspace(&mut self) -> Option<char> {
         let t = self.cursor_pos.idx;
+        if self.mode == Mode::Tee {
+            _ = self.replace_str.pop();
+        }
         if t == 0 {
             if self.cursor_pos.line != 0 {
                 let currline = self.contents[self.cursor_pos.line].clone();
@@ -434,6 +441,9 @@ impl Buffer {
     pub fn type_char(&mut self, ch: char) {
         self.contents[self.cursor_pos.line].insert(self.cursor_pos.idx, ch);
         self.cursor_pos.idx += 1;
+        if self.mode == Mode::Tee {
+            self.replace_str.push(ch);
+        }
         self.update_highlighting();
     }
 
@@ -668,8 +678,13 @@ impl Buffer {
 
         if showbottombar {
             let mut bottom_bar = format!(
-                "[{}] {}{}[{}; {}] ({: <12} fps) {}",
+                "[{}{}] {}{}[{}; {}] ({: <12} fps) {}",
                 self.filepath,
+                if let Some(BimVar::Bool(true)) = self.vars.get_mut("changed") {
+                    " [*]"
+                } else {
+                    ""
+                },
                 if self.find_str.is_empty() {
                     String::new()
                 } else {
