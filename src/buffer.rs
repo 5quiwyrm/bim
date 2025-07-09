@@ -1,13 +1,13 @@
 //! Buffer and cursor handling module.
 
+use crate::autocomplete;
 use crate::languages;
 use crate::snippets;
 use crossterm::{event, terminal};
 use std::{
     collections::HashMap,
     fmt::{self, Write},
-    fs,
-    time,
+    fs, time,
 };
 
 /// Prettifies events to string for printing.
@@ -161,8 +161,9 @@ impl Alert {
         Alert {
             contents: Vec::from(contents),
             time: time::SystemTime::now()
-                    .duration_since(time::UNIX_EPOCH)
-                    .unwrap().as_micros(),
+                .duration_since(time::UNIX_EPOCH)
+                .unwrap()
+                .as_micros(),
             timeout,
         }
     }
@@ -206,6 +207,8 @@ pub struct Buffer {
     pub lang: Box<dyn languages::Language>,
     /// Current snippets used.
     pub snippets: Box<dyn snippets::Snippet>,
+    /// Current autocomplete engine used.
+    pub autocomplete: Box<dyn autocomplete::AutoComplete>,
     /// Local vars.
     pub vars: HashMap<String, BimVar>,
     /// Buffer history.
@@ -241,6 +244,11 @@ impl Buffer {
         } else {
             snippets::get_snippets(filepath)
         };
+        let autocomplete = if contents[0].contains("use-ext:") {
+            autocomplete::get_autocomplete_engine(&contents[0])
+        } else {
+            autocomplete::get_autocomplete_engine(filepath)
+        };
         let initvars = HashMap::from([
             ("showbottombar".to_string(), BimVar::Bool(true)),
             (
@@ -273,6 +281,7 @@ impl Buffer {
             indent_lvl: 0,
             lang,
             snippets,
+            autocomplete,
             alert,
             buffer_history,
             mode: Mode::Nav,
@@ -376,9 +385,7 @@ impl Buffer {
                     let mut writecontent = trimmedlines.join("\n");
                     writecontent.push('\n');
                     _ = fs::write(&self.filepath, writecontent);
-                    self.alert = Alert::new(&[
-                        "save".to_string(),
-                    ], 1_000_000);
+                    self.alert = Alert::new(&["save".to_string()], 1_000_000);
                 }
             }
         }

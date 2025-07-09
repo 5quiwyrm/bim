@@ -32,41 +32,39 @@ pub fn handle_nav(
             KeyCode::Home | KeyCode::Char('0') if buf.temp_str.is_empty() => {
                 buf.cursor_pos.idx = 0;
             }
-            KeyCode::Char(n) if buf.temp_str.starts_with('l') => {
-                match n {
-                    'l' => {
-                        buf.temp_str.remove(0);
-                        repeat_action!(buf, {
-                            if buf.contents.len() == 1 {
-                                buf.contents[0].clear();
-                                buf.cursor_pos.idx = 0;
-                            } else {
-                                buf.contents.remove(buf.cursor_pos.line);
-                                buf.cursor_pos.idx = 0;
-                            }
-                            let contentlen = buf.contents.len();
-                            if buf.cursor_pos.line >= contentlen && !buf.contents.is_empty() {
-                                buf.cursor_pos.line = contentlen - 1;
-                            }
-                        });
-                        buf.update_highlighting();
-                        buf.temp_str.clear();
-                    }
-                    'c' => {
-                        buf.temp_str.remove(0);
-                        repeat_action!(buf, {
-                            if buf.move_right() {
-                                buf.backspace();
-                            }
-                        });
-                        buf.temp_str.clear();
-                    }
-                    d if d.is_numeric() => {
-                        buf.temp_str.push(d);
-                    }
-                    _ => {}
+            KeyCode::Char(n) if buf.temp_str.starts_with('l') => match n {
+                'l' => {
+                    buf.temp_str.remove(0);
+                    repeat_action!(buf, {
+                        if buf.contents.len() == 1 {
+                            buf.contents[0].clear();
+                            buf.cursor_pos.idx = 0;
+                        } else {
+                            buf.contents.remove(buf.cursor_pos.line);
+                            buf.cursor_pos.idx = 0;
+                        }
+                        let contentlen = buf.contents.len();
+                        if buf.cursor_pos.line >= contentlen && !buf.contents.is_empty() {
+                            buf.cursor_pos.line = contentlen - 1;
+                        }
+                    });
+                    buf.update_highlighting();
+                    buf.temp_str.clear();
                 }
-            }
+                'c' => {
+                    buf.temp_str.remove(0);
+                    repeat_action!(buf, {
+                        if buf.move_right() {
+                            buf.backspace();
+                        }
+                    });
+                    buf.temp_str.clear();
+                }
+                d if d.is_numeric() => {
+                    buf.temp_str.push(d);
+                }
+                _ => {}
+            },
             KeyCode::Char(n) if &buf.temp_str == "f" => {
                 buf.temp_str.clear();
                 if buf.move_right() {

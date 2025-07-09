@@ -12,6 +12,7 @@ pub mod buffer;
 use buffer::*;
 pub mod nav;
 use nav::*;
+pub mod autocomplete;
 pub mod languages;
 pub mod snippets;
 
@@ -210,9 +211,10 @@ pub fn main() {
                                                 }
                                             }
                                         } else {
-                                            buf.alert = Alert::new(&[
-                                                String::from("Inval line num"),
-                                            ], 1_000_000);
+                                            buf.alert = Alert::new(
+                                                &[String::from("Inval line num")],
+                                                1_000_000,
+                                            );
                                         }
                                         buf.temp_str.clear();
                                         buf.mode = return_mode;
@@ -225,25 +227,28 @@ pub fn main() {
                                                 let f = match linenums[0].parse::<usize>() {
                                                     Ok(o) if o <= buf.contents.len() => o,
                                                     _ => {
-                                                        buf.alert = Alert::new(&[
-                                                            String::from("Inval from"),
-                                                        ], 1_000_000);
+                                                        buf.alert = Alert::new(
+                                                            &[String::from("Inval from")],
+                                                            1_000_000,
+                                                        );
                                                         break 'cpy;
                                                     }
                                                 };
                                                 let t = match linenums[1].parse::<usize>() {
                                                     Ok(o) if o <= buf.contents.len() => o,
                                                     _ => {
-                                                        buf.alert = Alert::new(&[
-                                                            String::from("Inval to"),
-                                                        ], 1_000_000);
+                                                        buf.alert = Alert::new(
+                                                            &[String::from("Inval to")],
+                                                            1_000_000,
+                                                        );
                                                         break 'cpy;
                                                     }
                                                 };
                                                 if f > t || f == 0 {
-                                                    buf.alert = Alert::new(&[
-                                                        String::from("assert: f <= t"),
-                                                    ], 1_000_000);
+                                                    buf.alert = Alert::new(
+                                                        &[String::from("assert: f <= t")],
+                                                        1_000_000,
+                                                    );
                                                     break 'cpy;
                                                 }
 
@@ -257,12 +262,13 @@ pub fn main() {
                                                 }
                                                 buf.update_highlighting();
                                             } else {
-                                                buf.alert = Alert::new(&[
-                                                    format!(
+                                                buf.alert = Alert::new(
+                                                    &[format!(
                                                         "{} args given, 2 expected",
                                                         linenums.len()
-                                                    ),
-                                                ], 1_000_000);
+                                                    )],
+                                                    1_000_000,
+                                                );
                                             }
                                         }
                                         buf.temp_str.clear();
@@ -276,25 +282,28 @@ pub fn main() {
                                                 let f = match linenums[0].parse::<usize>() {
                                                     Ok(o) if o <= buf.contents.len() => o,
                                                     _ => {
-                                                        buf.alert = Alert::new(&[
-                                                            String::from("Inval from"),
-                                                        ], 1_000_000);
+                                                        buf.alert = Alert::new(
+                                                            &[String::from("Inval from")],
+                                                            1_000_000,
+                                                        );
                                                         break 'kl;
                                                     }
                                                 };
                                                 let t = match linenums[1].parse::<usize>() {
                                                     Ok(o) if o <= buf.contents.len() => o,
                                                     _ => {
-                                                        buf.alert = Alert::new(&[
-                                                            String::from("Inval to"),
-                                                        ], 1_000_000);
+                                                        buf.alert = Alert::new(
+                                                            &[String::from("Inval to")],
+                                                            1_000_000,
+                                                        );
                                                         break 'kl;
                                                     }
                                                 };
                                                 if f > t || f == 0 {
-                                                    buf.alert = Alert::new(&[
-                                                        String::from("assert: f <= t"),
-                                                    ], 1_000_000);
+                                                    buf.alert = Alert::new(
+                                                        &[String::from("assert: f <= t")],
+                                                        1_000_000,
+                                                    );
                                                     break 'kl;
                                                 }
 
@@ -313,12 +322,13 @@ pub fn main() {
                                                 }
                                                 buf.update_highlighting();
                                             } else {
-                                                buf.alert = Alert::new(&[
-                                                    format!(
+                                                buf.alert = Alert::new(
+                                                    &[format!(
                                                         "{} args given, 2 expected",
                                                         linenums.len()
-                                                    )
-                                                ], 1_000_000);
+                                                    )],
+                                                    1_000_000,
+                                                );
                                             }
                                         }
                                         buf.temp_str.clear();
@@ -344,9 +354,10 @@ pub fn main() {
                                     Mode::Snippet => {
                                         let sniplines = buf.snippets.query(&buf.temp_str);
                                         if sniplines.is_empty() {
-                                            buf.alert = Alert::new(&[
-                                                "Invalid request".to_string()
-                                            ], 1_000_000);
+                                            buf.alert = Alert::new(
+                                                &["Invalid request".to_string()],
+                                                1_000_000,
+                                            );
                                         }
                                         for (i, l) in sniplines.iter().enumerate() {
                                             let mut ins_line = String::new();
@@ -847,6 +858,46 @@ pub fn main() {
                                 buf.mode = Mode::Tee;
                                 buf.replace_str.clear();
                             }
+                            KeyCode::Char(x) if x.is_numeric() => {
+                                let matches: Vec<String> = buf
+                                    .autocomplete
+                                    .get_candidates(&buf)
+                                    .iter()
+                                    .take(5)
+                                    .map(|s| s.to_string())
+                                    .collect();
+                                match x {
+                                    '1' => {
+                                        for c in matches[0].chars() {
+                                            buf.type_char(c)
+                                        }
+                                    }
+                                    '2' => {
+                                        for c in matches[1].chars() {
+                                            buf.type_char(c)
+                                        }
+                                    }
+                                    '3' => {
+                                        for c in matches[2].chars() {
+                                            buf.type_char(c)
+                                        }
+                                    }
+                                    '4' => {
+                                        for c in matches[3].chars() {
+                                            buf.type_char(c)
+                                        }
+                                    }
+                                    '5' => {
+                                        for c in matches[4].chars() {
+                                            buf.type_char(c)
+                                        }
+                                    }
+                                    '6' => {
+                                        buf.alert = Alert::new(&matches, 5_000_000);
+                                    }
+                                    _ => {}
+                                }
+                            }
                             _ => {}
                         },
                         Mods::Ctrl => match key.code {
@@ -912,22 +963,19 @@ pub fn main() {
                                         ret.push(format!("  {s}"));
                                     }
                                 }
-                                buf.alert = Alert::new(
-                                    &ret,
-                                    5_000_000,
-                                );
+                                buf.alert = Alert::new(&ret, 5_000_000);
                             }
                             KeyCode::Char('p') => {
                                 if buf.buffer_history.head > 0 {
                                     buf.buffer_history.head -= 1;
                                     buf.save();
-                                    buf.filepath = buf.buffer_history.hist[buf.buffer_history.head].clone();
+                                    buf.filepath =
+                                        buf.buffer_history.hist[buf.buffer_history.head].clone();
                                     buf.reload_file();
                                     if buf.cursor_pos.line >= buf.contents.len() {
                                         buf.cursor_pos.line = buf.contents.len() - 1;
                                     }
-                                    if buf.cursor_pos.idx
-                                        > buf.contents[buf.cursor_pos.line].len()
+                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
                                     {
                                         buf.cursor_pos.idx =
                                             buf.contents[buf.cursor_pos.line].len();
@@ -940,23 +988,20 @@ pub fn main() {
                                             ret.push(format!("  {s}"));
                                         }
                                     }
-                                    buf.alert = Alert::new(
-                                        &ret,
-                                        500_000,
-                                    );
+                                    buf.alert = Alert::new(&ret, 500_000);
                                 }
                             }
                             KeyCode::Char('n') => {
                                 if buf.buffer_history.head + 1 < buf.buffer_history.hist.len() {
                                     buf.buffer_history.head += 1;
                                     buf.save();
-                                    buf.filepath = buf.buffer_history.hist[buf.buffer_history.head].clone();
+                                    buf.filepath =
+                                        buf.buffer_history.hist[buf.buffer_history.head].clone();
                                     buf.reload_file();
                                     if buf.cursor_pos.line >= buf.contents.len() {
                                         buf.cursor_pos.line = buf.contents.len() - 1;
                                     }
-                                    if buf.cursor_pos.idx
-                                        > buf.contents[buf.cursor_pos.line].len()
+                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
                                     {
                                         buf.cursor_pos.idx =
                                             buf.contents[buf.cursor_pos.line].len();
@@ -969,10 +1014,7 @@ pub fn main() {
                                             ret.push(format!("  {s}"));
                                         }
                                     }
-                                    buf.alert = Alert::new(
-                                        &ret,
-                                        500_000,
-                                    );
+                                    buf.alert = Alert::new(&ret, 500_000);
                                 }
                             }
                             _ => {}
