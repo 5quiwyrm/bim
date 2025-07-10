@@ -871,29 +871,39 @@ pub fn main() {
                                         for c in matches[0].chars() {
                                             buf.type_char(c)
                                         }
+                                        buf.type_char(' ')
                                     }
                                     '2' => {
                                         for c in matches[1].chars() {
                                             buf.type_char(c)
                                         }
+                                        buf.type_char(' ')
                                     }
                                     '3' => {
                                         for c in matches[2].chars() {
                                             buf.type_char(c)
                                         }
+                                        buf.type_char(' ')
                                     }
                                     '4' => {
                                         for c in matches[3].chars() {
                                             buf.type_char(c)
                                         }
+                                        buf.type_char(' ')
                                     }
                                     '5' => {
                                         for c in matches[4].chars() {
                                             buf.type_char(c)
                                         }
+                                        buf.type_char(' ')
                                     }
                                     '6' => {
-                                        buf.alert = Alert::new(&matches, 5_000_000);
+                                        let display_matches: Vec<String> = matches
+                                            .iter()
+                                            .enumerate()
+                                            .map(|(i, v)| format!("{i}: `{v}`"))
+                                            .collect();
+                                        buf.alert = Alert::new(&display_matches, 500_000);
                                     }
                                     _ => {}
                                 }

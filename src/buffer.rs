@@ -685,7 +685,7 @@ impl Buffer {
 
         if showbottombar {
             let mut bottom_bar = format!(
-                "[{}{}] {}{}[{}; {}] ({: <12} fps) {}",
+                "[{}{}] {}{}[{}; {}; {}] ({: <12} fps) {}",
                 self.filepath,
                 if let Some(BimVar::Bool(true)) = self.vars.get_mut("changed") {
                     " [*]"
@@ -704,6 +704,7 @@ impl Buffer {
                 },
                 self.lang.display_str(),
                 self.snippets.display_str(),
+                self.autocomplete.display_str(),
                 style_time(self.iter_time),
                 pretty_str_event(event),
             );

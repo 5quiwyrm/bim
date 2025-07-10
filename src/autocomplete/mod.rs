@@ -7,6 +7,7 @@ pub trait AutoComplete {
     // as a Vec<String>.
     fn get_candidates(&self, buf: &Buffer) -> Vec<String>;
     fn is_kind(&self, path: &str) -> bool;
+    fn display_str(&self) -> &str;
 }
 
 pub mod default;

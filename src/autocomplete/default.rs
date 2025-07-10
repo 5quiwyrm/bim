@@ -28,6 +28,9 @@ impl AutoComplete for Default {
     fn is_kind(&self, _path: &str) -> bool {
         true
     }
+    fn display_str(&self) -> &str {
+        "Text"
+    }
 }
 
 // Stolen from https://github.com/TheAlgorithms/Rust/blob/master/src/string/levenshtein_distance.rs
