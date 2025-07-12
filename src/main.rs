@@ -477,6 +477,37 @@ pub fn main() {
                         },
                         Mods::Alt => match key.code {
                             KeyCode::Char('q') => {
+                                if buf.buffer_history.hist.len() < 2 {
+                                    break 'ed;
+                                } else {
+                                    buf.buffer_history.hist.remove(buf.buffer_history.head);
+                                    if buf.buffer_history.head > 0 {
+                                        buf.buffer_history.head -= 1;
+                                    }
+                                    buf.filepath =
+                                        buf.buffer_history.hist[buf.buffer_history.head].clone();
+                                    buf.reload_file();
+                                    buf.mode = return_mode;
+                                    if buf.cursor_pos.line >= buf.contents.len() {
+                                        buf.cursor_pos.line = buf.contents.len() - 1;
+                                    }
+                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
+                                    {
+                                        buf.cursor_pos.idx =
+                                            buf.contents[buf.cursor_pos.line].len();
+                                    }
+                                    let mut ret: Vec<String> = vec![];
+                                    for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
+                                        if idx == buf.buffer_history.head {
+                                            ret.push(format!("> {s}"));
+                                        } else {
+                                            ret.push(format!("  {s}"));
+                                        }
+                                    }
+                                    buf.alert = Alert::new(&ret, 5_000_000);
+                                }
+                            }
+                            KeyCode::Char('Q') => {
                                 break 'ed;
                             }
                             KeyCode::Char('s') => {
@@ -867,41 +898,37 @@ pub fn main() {
                                     .map(|s| s.to_string())
                                     .collect();
                                 match x {
-                                    '1' => {
-                                        for c in matches[0].chars() {
-                                            buf.type_char(c)
+                                    '1' | '2' | '3' | '4' | '5' => {
+                                        let replace_str = match x {
+                                            '1' => matches[0].clone(),
+                                            '2' => matches[1].clone(),
+                                            '3' => matches[2].clone(),
+                                            '4' => matches[3].clone(),
+                                            '5' => matches[4].clone(),
+                                            _ => buf.find_str.clone(),
+                                        };
+                                        buf.contents[buf.cursor_pos.line].replace_range(
+                                            (if buf.cursor_pos.idx >= buf.find_str.len() {
+                                                buf.cursor_pos.idx - buf.find_str.len()
+                                            } else {
+                                                0
+                                            })
+                                                ..buf.cursor_pos.idx,
+                                            &replace_str,
+                                        );
+                                        if buf.cursor_pos.idx
+                                            > buf.contents[buf.cursor_pos.line].len()
+                                        {
+                                            buf.cursor_pos.idx =
+                                                buf.contents[buf.cursor_pos.line].len();
                                         }
-                                        buf.type_char(' ')
-                                    }
-                                    '2' => {
-                                        for c in matches[1].chars() {
-                                            buf.type_char(c)
-                                        }
-                                        buf.type_char(' ')
-                                    }
-                                    '3' => {
-                                        for c in matches[2].chars() {
-                                            buf.type_char(c)
-                                        }
-                                        buf.type_char(' ')
-                                    }
-                                    '4' => {
-                                        for c in matches[3].chars() {
-                                            buf.type_char(c)
-                                        }
-                                        buf.type_char(' ')
-                                    }
-                                    '5' => {
-                                        for c in matches[4].chars() {
-                                            buf.type_char(c)
-                                        }
-                                        buf.type_char(' ')
+                                        buf.update_highlighting();
                                     }
                                     '6' => {
                                         let display_matches: Vec<String> = matches
                                             .iter()
                                             .enumerate()
-                                            .map(|(i, v)| format!("{i}: `{v}`"))
+                                            .map(|(i, v)| format!("{}: `{v}`", i + 1))
                                             .collect();
                                         buf.alert = Alert::new(&display_matches, 500_000);
                                     }
