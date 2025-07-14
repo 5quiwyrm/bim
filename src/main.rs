@@ -890,13 +890,10 @@ pub fn main() {
                                 buf.replace_str.clear();
                             }
                             KeyCode::Char(x) if x.is_numeric() => {
-                                let matches: Vec<String> = buf
-                                    .autocomplete
-                                    .get_candidates(&buf)
-                                    .iter()
-                                    .take(5)
-                                    .map(|s| s.to_string())
-                                    .collect();
+                                let (all_matches, mut querylen) =
+                                    buf.autocomplete.get_candidates(&buf);
+                                let matches: Vec<String> =
+                                    all_matches.iter().take(5).map(|s| s.to_string()).collect();
                                 match x {
                                     '1' | '2' | '3' | '4' | '5' => {
                                         let replace_str = match x {
@@ -905,11 +902,14 @@ pub fn main() {
                                             '3' => matches[2].clone(),
                                             '4' => matches[3].clone(),
                                             '5' => matches[4].clone(),
-                                            _ => buf.find_str.clone(),
+                                            _ => {
+                                                querylen = 0;
+                                                String::new()
+                                            }
                                         };
                                         buf.contents[buf.cursor_pos.line].replace_range(
-                                            (if buf.cursor_pos.idx >= buf.find_str.len() {
-                                                buf.cursor_pos.idx - buf.find_str.len()
+                                            (if buf.cursor_pos.idx >= querylen {
+                                                buf.cursor_pos.idx - querylen
                                             } else {
                                                 0
                                             })

@@ -13,7 +13,7 @@ fn isnt_token_char(c: char) -> bool {
 }
 
 impl AutoComplete for Default {
-    fn get_candidates(&self, buf: &Buffer) -> Vec<String> {
+    fn get_candidates(&self, buf: &Buffer) -> (Vec<String>, usize) {
         let mut query = String::new();
         let line: Vec<char> = buf.contents[buf.cursor_pos.line].chars().collect();
         let mut idx = buf.cursor_pos.idx;
@@ -38,7 +38,10 @@ impl AutoComplete for Default {
             candidates.push((tk.to_string(), optimized_levenshtein_distance(&query, tk)))
         }
         candidates.sort_by(|a, b| a.1.cmp(&b.1));
-        candidates.iter().map(|a| a.0.clone()).collect()
+        (
+            candidates.iter().map(|a| a.0.clone()).collect(),
+            query.len(),
+        )
     }
     fn is_kind(&self, _path: &str) -> bool {
         true

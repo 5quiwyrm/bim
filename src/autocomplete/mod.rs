@@ -5,7 +5,8 @@ use crate::Buffer;
 pub trait AutoComplete {
     // Given contents, get candidates and return (in order of likelihood)
     // as a Vec<String>.
-    fn get_candidates(&self, buf: &Buffer) -> Vec<String>;
+    // The usize also returned is the length of the query.
+    fn get_candidates(&self, buf: &Buffer) -> (Vec<String>, usize);
     fn is_kind(&self, path: &str) -> bool;
     fn display_str(&self) -> &str;
 }
