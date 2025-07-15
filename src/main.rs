@@ -1027,7 +1027,7 @@ pub fn main() {
                                                 ..buf.cursor_pos.idx,
                                             &replace_str,
                                         );
-                                        buf.cursor_pos.idx += buf.replace_str.len();
+                                        buf.cursor_pos.idx += replace_str.len();
                                         buf.cursor_pos.idx -= querylen;
                                         if buf.cursor_pos.idx
                                             > buf.contents[buf.cursor_pos.line].len()
