@@ -4,9 +4,19 @@
 
 use crate::Buffer;
 use crate::autocomplete::AutoComplete;
+use std::collections::HashMap;
 
-pub struct Default {}
-pub const DEFAULT: Default = Default {};
+pub struct Default {
+    tokens: HashMap<String, ()>,
+}
+
+impl Default {
+    pub fn new() -> Self {
+        Default {
+            tokens: HashMap::new(),
+        }
+    }
+}
 
 fn isnt_token_char(c: char) -> bool {
     !c.is_alphanumeric() && c != '_' && c != '-' && c != '\''
@@ -26,15 +36,8 @@ impl AutoComplete for Default {
             }
         }
         query = query.chars().rev().collect();
-        let contents = buf.contents.join(" ");
-        let mut tokens: Vec<&str> = contents
-            .split(isnt_token_char)
-            .filter(|t| t.len() >= query.len())
-            .collect();
-        tokens.sort();
-        tokens.dedup();
         let mut candidates: Vec<(String, usize)> = vec![];
-        for tk in &tokens {
+        for tk in self.tokens.keys() {
             candidates.push((tk.to_string(), optimized_levenshtein_distance(&query, tk)))
         }
         candidates.sort_by(|a, b| a.1.cmp(&b.1));
@@ -42,6 +45,12 @@ impl AutoComplete for Default {
             candidates.iter().map(|a| a.0.clone()).collect(),
             query.len(),
         )
+    }
+    fn add_tokens(&mut self, contents: &[String]) {
+        let contents_joined = contents.join(" ");
+        for tk in contents_joined.split(isnt_token_char) {
+            _ = self.tokens.insert(tk.to_string(), ());
+        }
     }
     fn is_kind(&self, _path: &str) -> bool {
         true

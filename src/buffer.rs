@@ -379,6 +379,7 @@ impl Buffer {
         if self.filepath != *"scratch" {
             if let Some(BimVar::Bool(changed)) = self.vars.get_mut("changed") {
                 if *changed {
+                    self.autocomplete.add_tokens(&self.contents);
                     *changed = false;
                     let trimmedlines: Vec<&str> =
                         self.contents.iter().map(|s| s.trim_end()).collect();
