@@ -59,6 +59,8 @@ pub enum Mode {
     Nav,
     /// Tee mode.
     Tee,
+    /// Indent mode.
+    Indent,
     /// Mode switching mode.
     Switch,
 }
@@ -80,6 +82,7 @@ impl Mode {
             "killlines" | "kl" | "k" => Mode::KillLines,
             "tee" | "t" => Mode::Tee,
             "nav" | "n" => Mode::Nav,
+            "indent" | "i" => Mode::Indent,
             _ => Mode::Default,
         }
     }
@@ -100,6 +103,7 @@ impl fmt::Display for Mode {
             Mode::KillLines => write!(f, "Killing lines (from -> to)"),
             Mode::Nav => write!(f, "nav :"),
             Mode::Tee => write!(f, "tee"),
+            Mode::Indent => write!(f, "indent"),
             Mode::Switch => write!(f, "switch to mode"),
         }
     }
@@ -111,7 +115,7 @@ impl Mode {
         use Mode::*;
         match self {
             Default | Paste | Replace | Find | ReplaceStr | Tee => false,
-            Goto | Switch | OpenFile | Copy | Snippet | KillLines | Nav => true,
+            Goto | Switch | OpenFile | Copy | Snippet | KillLines | Nav | Indent => true,
         }
     }
 }
@@ -294,6 +298,7 @@ impl Buffer {
         if let Some(change) = self.vars.get_mut("changed") {
             *change = BimVar::Bool(true);
             self.highlighted_contents = self.lang.highlight(&self.contents);
+            self.autocomplete.add_tokens(&self.contents);
         }
     }
 
@@ -379,7 +384,6 @@ impl Buffer {
         if self.filepath != *"scratch" {
             if let Some(BimVar::Bool(changed)) = self.vars.get_mut("changed") {
                 if *changed {
-                    self.autocomplete.add_tokens(&self.contents);
                     *changed = false;
                     let trimmedlines: Vec<&str> =
                         self.contents.iter().map(|s| s.trim_end()).collect();

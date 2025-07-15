@@ -191,6 +191,10 @@ pub fn main() {
                                     Mode::Find | Mode::ReplaceStr => {
                                         buf.mode = return_mode;
                                     }
+                                    Mode::Indent => {
+                                        buf.mode = return_mode;
+                                        buf.temp_str.clear();
+                                    }
                                     Mode::Switch => {
                                         buf.mode = Mode::from_string(&buf.temp_str);
                                         buf.temp_str.clear();
@@ -589,26 +593,130 @@ pub fn main() {
                                 }
                             }
                             KeyCode::Char('<') => {
-                                if buf.indent_lvl != 0 {
-                                    buf.indent_lvl -= 1;
-                                    let indent_size = buf.lang.indent_size();
-                                    if buf.cursor_pos.idx >= indent_size {
-                                        buf.cursor_pos.idx -= indent_size;
+                                if buf.mode != Mode::Indent {
+                                    if buf.indent_lvl != 0 {
+                                        buf.indent_lvl -= 1;
+                                        let indent_size = buf.lang.indent_size();
+                                        if buf.cursor_pos.idx >= indent_size {
+                                            buf.cursor_pos.idx -= indent_size;
+                                        }
+                                        let linelen = buf.contents[buf.cursor_pos.line].len();
+                                        if buf.cursor_pos.idx > linelen {
+                                            buf.cursor_pos.idx = linelen;
+                                        }
                                     }
-                                    let linelen = buf.contents[buf.cursor_pos.line].len();
-                                    if buf.cursor_pos.idx > linelen {
-                                        buf.cursor_pos.idx = linelen;
+                                    buf.adjust_indent();
+                                } else {
+                                    'iden: {
+                                        let linenums: Vec<&str> =
+                                            buf.temp_str.split_whitespace().collect();
+                                        if linenums.len() == 2 {
+                                            let f = match linenums[0].parse::<usize>() {
+                                                Ok(o) if o <= buf.contents.len() => o,
+                                                _ => {
+                                                    buf.alert = Alert::new(
+                                                        &[String::from("Inval from")],
+                                                        1_000_000,
+                                                    );
+                                                    break 'iden;
+                                                }
+                                            };
+                                            let t = match linenums[1].parse::<usize>() {
+                                                Ok(o) if o <= buf.contents.len() => o,
+                                                _ => {
+                                                    buf.alert = Alert::new(
+                                                        &[String::from("Inval to")],
+                                                        1_000_000,
+                                                    );
+                                                    break 'iden;
+                                                }
+                                            };
+                                            if f > t || f == 0 {
+                                                buf.alert = Alert::new(
+                                                    &[String::from("assert: f <= t")],
+                                                    1_000_000,
+                                                );
+                                                break 'iden;
+                                            }
+                                            let mut prefix = String::new();
+                                            for _ in 0..buf.lang.indent_size() {
+                                                prefix.push(' ');
+                                            }
+                                            for i in (f - 1)..t {
+                                                buf.contents[i] = buf.contents[i]
+                                                    .strip_prefix(&prefix)
+                                                    .unwrap_or(&buf.contents[i])
+                                                    .to_string();
+                                            }
+                                            buf.update_highlighting();
+                                        } else {
+                                            buf.alert = Alert::new(
+                                                &[format!(
+                                                    "{} args given, 2 expected",
+                                                    linenums.len()
+                                                )],
+                                                1_000_000,
+                                            );
+                                        }
                                     }
                                 }
-                                buf.adjust_indent();
                             }
                             KeyCode::Char('>') => {
-                                buf.indent_lvl += 1;
-                                buf.cursor_pos.idx += buf.lang.indent_size();
-                                buf.adjust_indent();
-                                let linelen = buf.contents[buf.cursor_pos.line].len();
-                                if buf.cursor_pos.idx > linelen {
-                                    buf.cursor_pos.idx = linelen;
+                                if buf.mode != Mode::Indent {
+                                    buf.indent_lvl += 1;
+                                    buf.adjust_indent();
+                                    buf.cursor_pos.idx += buf.lang.indent_size();
+                                } else {
+                                    'iden: {
+                                        let linenums: Vec<&str> =
+                                            buf.temp_str.split_whitespace().collect();
+                                        if linenums.len() == 2 {
+                                            let f = match linenums[0].parse::<usize>() {
+                                                Ok(o) if o <= buf.contents.len() => o,
+                                                _ => {
+                                                    buf.alert = Alert::new(
+                                                        &[String::from("Inval from")],
+                                                        1_000_000,
+                                                    );
+                                                    break 'iden;
+                                                }
+                                            };
+                                            let t = match linenums[1].parse::<usize>() {
+                                                Ok(o) if o <= buf.contents.len() => o,
+                                                _ => {
+                                                    buf.alert = Alert::new(
+                                                        &[String::from("Inval to")],
+                                                        1_000_000,
+                                                    );
+                                                    break 'iden;
+                                                }
+                                            };
+                                            if f > t || f == 0 {
+                                                buf.alert = Alert::new(
+                                                    &[String::from("assert: f <= t")],
+                                                    1_000_000,
+                                                );
+                                                break 'iden;
+                                            }
+                                            let mut prefix = String::new();
+                                            for _ in 0..buf.lang.indent_size() {
+                                                prefix.push(' ');
+                                            }
+                                            for i in (f - 1)..t {
+                                                buf.contents[i] =
+                                                    format!("{}{}", prefix, buf.contents[i]);
+                                            }
+                                            buf.update_highlighting();
+                                        } else {
+                                            buf.alert = Alert::new(
+                                                &[format!(
+                                                    "{} args given, 2 expected",
+                                                    linenums.len()
+                                                )],
+                                                1_000_000,
+                                            );
+                                        }
+                                    }
                                 }
                             }
                             KeyCode::Char(';') => {
@@ -933,6 +1041,16 @@ pub fn main() {
                                         buf.alert = Alert::new(&display_matches, 500_000);
                                     }
                                     _ => {}
+                                }
+                            }
+                            KeyCode::Char('U') => {
+                                if buf.mode != Mode::Indent {
+                                    buf.mode = Mode::Indent;
+                                    buf.temp_str.clear();
+                                }
+                                let numbuf = format!("{} ", buf.cursor_pos.line + 1);
+                                for c in numbuf.chars() {
+                                    buf.temp_str.push(c);
                                 }
                             }
                             _ => {}
