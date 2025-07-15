@@ -291,6 +291,10 @@ impl Buffer {
             mode: Mode::Nav,
         }
     }
+    #[inline]
+    pub fn add_tokens(&mut self) {
+        self.autocomplete.add_tokens(&self.contents);
+    }
 
     /// Updates highlighting. Performance cost varies. Call as infrequently as possible.
     #[inline]
@@ -298,7 +302,6 @@ impl Buffer {
         if let Some(change) = self.vars.get_mut("changed") {
             *change = BimVar::Bool(true);
             self.highlighted_contents = self.lang.highlight(&self.contents);
-            self.autocomplete.add_tokens(&self.contents);
         }
     }
 

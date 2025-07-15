@@ -7,6 +7,7 @@
 #![allow(clippy::wildcard_imports)]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::case_sensitive_file_extension_comparisons)]
+#![allow(clippy::new_without_default)]
 
 pub mod buffer;
 use buffer::*;
@@ -128,6 +129,7 @@ pub fn main() {
     print!("\x1bc\x1b[?25l");
     _ = terminal::enable_raw_mode();
     buf.save();
+    buf.add_tokens();
     print!("Press any key (ideally esc)...");
     'ed: loop {
         let (widthu, heightu) = terminal::size().expect("terminal should have size");
@@ -354,6 +356,7 @@ pub fn main() {
                                             buf.cursor_pos.idx =
                                                 buf.contents[buf.cursor_pos.line].len();
                                         }
+                                        buf.add_tokens();
                                     }
                                     Mode::Snippet => {
                                         let sniplines = buf.snippets.query(&buf.temp_str);
@@ -1024,6 +1027,8 @@ pub fn main() {
                                                 ..buf.cursor_pos.idx,
                                             &replace_str,
                                         );
+                                        buf.cursor_pos.idx += buf.replace_str.len();
+                                        buf.cursor_pos.idx -= querylen;
                                         if buf.cursor_pos.idx
                                             > buf.contents[buf.cursor_pos.line].len()
                                         {
@@ -1121,56 +1126,58 @@ pub fn main() {
                                 buf.alert = Alert::new(&ret, 5_000_000);
                             }
                             KeyCode::Char('p') => {
-                                if buf.buffer_history.head > 0 {
-                                    buf.buffer_history.head -= 1;
-                                    buf.save();
-                                    buf.filepath =
-                                        buf.buffer_history.hist[buf.buffer_history.head].clone();
-                                    buf.reload_file();
-                                    if buf.cursor_pos.line >= buf.contents.len() {
-                                        buf.cursor_pos.line = buf.contents.len() - 1;
-                                    }
-                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
-                                    {
-                                        buf.cursor_pos.idx =
-                                            buf.contents[buf.cursor_pos.line].len();
-                                    }
-                                    let mut ret = vec![];
-                                    for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
-                                        if idx == buf.buffer_history.head {
-                                            ret.push(format!("> {s}"));
-                                        } else {
-                                            ret.push(format!("  {s}"));
-                                        }
-                                    }
-                                    buf.alert = Alert::new(&ret, 500_000);
+                                if buf.buffer_history.head == 0 {
+                                    buf.buffer_history.head = buf.buffer_history.hist.len();
                                 }
+                                buf.buffer_history.head -= 1;
+                                buf.save();
+                                buf.filepath =
+                                    buf.buffer_history.hist[buf.buffer_history.head].clone();
+                                buf.reload_file();
+                                if buf.cursor_pos.line >= buf.contents.len() {
+                                    buf.cursor_pos.line = buf.contents.len() - 1;
+                                }
+                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].len();
+                                }
+                                let mut ret = vec![];
+                                for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
+                                    if idx == buf.buffer_history.head {
+                                        ret.push(format!("> {s}"));
+                                    } else {
+                                        ret.push(format!("  {s}"));
+                                    }
+                                }
+                                buf.alert = Alert::new(&ret, 500_000);
                             }
                             KeyCode::Char('n') => {
-                                if buf.buffer_history.head + 1 < buf.buffer_history.hist.len() {
-                                    buf.buffer_history.head += 1;
-                                    buf.save();
-                                    buf.filepath =
-                                        buf.buffer_history.hist[buf.buffer_history.head].clone();
-                                    buf.reload_file();
-                                    if buf.cursor_pos.line >= buf.contents.len() {
-                                        buf.cursor_pos.line = buf.contents.len() - 1;
-                                    }
-                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
-                                    {
-                                        buf.cursor_pos.idx =
-                                            buf.contents[buf.cursor_pos.line].len();
-                                    }
-                                    let mut ret = vec![];
-                                    for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
-                                        if idx == buf.buffer_history.head {
-                                            ret.push(format!("> {s}"));
-                                        } else {
-                                            ret.push(format!("  {s}"));
-                                        }
-                                    }
-                                    buf.alert = Alert::new(&ret, 500_000);
+                                buf.buffer_history.head += 1;
+                                if buf.buffer_history.head >= buf.buffer_history.hist.len() {
+                                    buf.buffer_history.head = 0;
                                 }
+                                buf.save();
+                                buf.filepath =
+                                    buf.buffer_history.hist[buf.buffer_history.head].clone();
+                                buf.reload_file();
+                                if buf.cursor_pos.line >= buf.contents.len() {
+                                    buf.cursor_pos.line = buf.contents.len() - 1;
+                                }
+                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].len();
+                                }
+                                let mut ret = vec![];
+                                for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
+                                    if idx == buf.buffer_history.head {
+                                        ret.push(format!("> {s}"));
+                                    } else {
+                                        ret.push(format!("  {s}"));
+                                    }
+                                }
+                                buf.alert = Alert::new(&ret, 500_000);
                             }
                             _ => {}
                         },
