@@ -85,6 +85,32 @@ macro_rules! autopair {
     }
 }
 
+impl Buffer {
+    fn decode_from_to(&self) -> Result<(usize, usize), String> {
+        let linenums: Vec<&str> = self.temp_str.split_whitespace().collect();
+        if linenums.len() == 2 {
+            let f = match linenums[0].parse::<usize>() {
+                Ok(o) if o <= self.contents.len() => o,
+                _ => {
+                    return Err("Inval from".to_string());
+                }
+            };
+            let t = match linenums[1].parse::<usize>() {
+                Ok(o) if o <= self.contents.len() => o,
+                _ => {
+                    return Err("Inval to".to_string());
+                }
+            };
+            if f > t || f == 0 {
+                return Err("assert: f <= t".to_string());
+            }
+            Ok((f, t))
+        } else {
+            Err(format!("{} args given, 2 expected", linenums.len()))
+        }
+    }
+}
+
 /// Modifiers. Ignores shiftedness.
 pub enum Mods {
     /// No modifiers.
@@ -226,38 +252,8 @@ pub fn main() {
                                         buf.mode = return_mode;
                                     }
                                     Mode::Copy => {
-                                        'cpy: {
-                                            let linenums: Vec<&str> =
-                                                buf.temp_str.split_whitespace().collect();
-                                            if linenums.len() == 2 {
-                                                let f = match linenums[0].parse::<usize>() {
-                                                    Ok(o) if o <= buf.contents.len() => o,
-                                                    _ => {
-                                                        buf.alert = Alert::new(
-                                                            &[String::from("Inval from")],
-                                                            1_000_000,
-                                                        );
-                                                        break 'cpy;
-                                                    }
-                                                };
-                                                let t = match linenums[1].parse::<usize>() {
-                                                    Ok(o) if o <= buf.contents.len() => o,
-                                                    _ => {
-                                                        buf.alert = Alert::new(
-                                                            &[String::from("Inval to")],
-                                                            1_000_000,
-                                                        );
-                                                        break 'cpy;
-                                                    }
-                                                };
-                                                if f > t || f == 0 {
-                                                    buf.alert = Alert::new(
-                                                        &[String::from("assert: f <= t")],
-                                                        1_000_000,
-                                                    );
-                                                    break 'cpy;
-                                                }
-
+                                        match buf.decode_from_to() {
+                                            Ok((f, t)) => {
                                                 let paste_contents =
                                                     &buf.contents.clone()[f - 1..t];
                                                 for (i, l) in paste_contents.iter().enumerate() {
@@ -267,52 +263,17 @@ pub fn main() {
                                                     );
                                                 }
                                                 buf.update_highlighting();
-                                            } else {
-                                                buf.alert = Alert::new(
-                                                    &[format!(
-                                                        "{} args given, 2 expected",
-                                                        linenums.len()
-                                                    )],
-                                                    1_000_000,
-                                                );
+                                            }
+                                            Err(e) => {
+                                                buf.alert = Alert::new(&[e], 1_000_000);
                                             }
                                         }
                                         buf.temp_str.clear();
                                         buf.mode = return_mode;
                                     }
                                     Mode::KillLines => {
-                                        'kl: {
-                                            let linenums: Vec<&str> =
-                                                buf.temp_str.split_whitespace().collect();
-                                            if linenums.len() == 2 {
-                                                let f = match linenums[0].parse::<usize>() {
-                                                    Ok(o) if o <= buf.contents.len() => o,
-                                                    _ => {
-                                                        buf.alert = Alert::new(
-                                                            &[String::from("Inval from")],
-                                                            1_000_000,
-                                                        );
-                                                        break 'kl;
-                                                    }
-                                                };
-                                                let t = match linenums[1].parse::<usize>() {
-                                                    Ok(o) if o <= buf.contents.len() => o,
-                                                    _ => {
-                                                        buf.alert = Alert::new(
-                                                            &[String::from("Inval to")],
-                                                            1_000_000,
-                                                        );
-                                                        break 'kl;
-                                                    }
-                                                };
-                                                if f > t || f == 0 {
-                                                    buf.alert = Alert::new(
-                                                        &[String::from("assert: f <= t")],
-                                                        1_000_000,
-                                                    );
-                                                    break 'kl;
-                                                }
-
+                                        match buf.decode_from_to() {
+                                            Ok((f, t)) => {
                                                 let mut i = f;
                                                 while i <= t {
                                                     buf.contents.remove(f - 1);
@@ -327,14 +288,9 @@ pub fn main() {
                                                     buf.cursor_pos.line = buf.contents.len() - 1;
                                                 }
                                                 buf.update_highlighting();
-                                            } else {
-                                                buf.alert = Alert::new(
-                                                    &[format!(
-                                                        "{} args given, 2 expected",
-                                                        linenums.len()
-                                                    )],
-                                                    1_000_000,
-                                                );
+                                            }
+                                            Err(e) => {
+                                                buf.alert = Alert::new(&[e], 1_000_000);
                                             }
                                         }
                                         buf.temp_str.clear();
@@ -610,37 +566,8 @@ pub fn main() {
                                     }
                                     buf.adjust_indent();
                                 } else {
-                                    'iden: {
-                                        let linenums: Vec<&str> =
-                                            buf.temp_str.split_whitespace().collect();
-                                        if linenums.len() == 2 {
-                                            let f = match linenums[0].parse::<usize>() {
-                                                Ok(o) if o <= buf.contents.len() => o,
-                                                _ => {
-                                                    buf.alert = Alert::new(
-                                                        &[String::from("Inval from")],
-                                                        1_000_000,
-                                                    );
-                                                    break 'iden;
-                                                }
-                                            };
-                                            let t = match linenums[1].parse::<usize>() {
-                                                Ok(o) if o <= buf.contents.len() => o,
-                                                _ => {
-                                                    buf.alert = Alert::new(
-                                                        &[String::from("Inval to")],
-                                                        1_000_000,
-                                                    );
-                                                    break 'iden;
-                                                }
-                                            };
-                                            if f > t || f == 0 {
-                                                buf.alert = Alert::new(
-                                                    &[String::from("assert: f <= t")],
-                                                    1_000_000,
-                                                );
-                                                break 'iden;
-                                            }
+                                    match buf.decode_from_to() {
+                                        Ok((f, t)) => {
                                             let mut prefix = String::new();
                                             for _ in 0..buf.lang.indent_size() {
                                                 prefix.push(' ');
@@ -652,14 +579,9 @@ pub fn main() {
                                                     .to_string();
                                             }
                                             buf.update_highlighting();
-                                        } else {
-                                            buf.alert = Alert::new(
-                                                &[format!(
-                                                    "{} args given, 2 expected",
-                                                    linenums.len()
-                                                )],
-                                                1_000_000,
-                                            );
+                                        }
+                                        Err(e) => {
+                                            buf.alert = Alert::new(&[e], 1_000_000);
                                         }
                                     }
                                 }
@@ -670,37 +592,8 @@ pub fn main() {
                                     buf.adjust_indent();
                                     buf.cursor_pos.idx += buf.lang.indent_size();
                                 } else {
-                                    'iden: {
-                                        let linenums: Vec<&str> =
-                                            buf.temp_str.split_whitespace().collect();
-                                        if linenums.len() == 2 {
-                                            let f = match linenums[0].parse::<usize>() {
-                                                Ok(o) if o <= buf.contents.len() => o,
-                                                _ => {
-                                                    buf.alert = Alert::new(
-                                                        &[String::from("Inval from")],
-                                                        1_000_000,
-                                                    );
-                                                    break 'iden;
-                                                }
-                                            };
-                                            let t = match linenums[1].parse::<usize>() {
-                                                Ok(o) if o <= buf.contents.len() => o,
-                                                _ => {
-                                                    buf.alert = Alert::new(
-                                                        &[String::from("Inval to")],
-                                                        1_000_000,
-                                                    );
-                                                    break 'iden;
-                                                }
-                                            };
-                                            if f > t || f == 0 {
-                                                buf.alert = Alert::new(
-                                                    &[String::from("assert: f <= t")],
-                                                    1_000_000,
-                                                );
-                                                break 'iden;
-                                            }
+                                    match buf.decode_from_to() {
+                                        Ok((f, t)) => {
                                             let mut prefix = String::new();
                                             for _ in 0..buf.lang.indent_size() {
                                                 prefix.push(' ');
@@ -710,14 +603,9 @@ pub fn main() {
                                                     format!("{}{}", prefix, buf.contents[i]);
                                             }
                                             buf.update_highlighting();
-                                        } else {
-                                            buf.alert = Alert::new(
-                                                &[format!(
-                                                    "{} args given, 2 expected",
-                                                    linenums.len()
-                                                )],
-                                                1_000_000,
-                                            );
+                                        }
+                                        Err(e) => {
+                                            buf.alert = Alert::new(&[e], 1_000_000);
                                         }
                                     }
                                 }
@@ -1137,10 +1025,8 @@ pub fn main() {
                                 if buf.cursor_pos.line >= buf.contents.len() {
                                     buf.cursor_pos.line = buf.contents.len() - 1;
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
-                                {
-                                    buf.cursor_pos.idx =
-                                        buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
                                 let mut ret = vec![];
                                 for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
@@ -1164,10 +1050,8 @@ pub fn main() {
                                 if buf.cursor_pos.line >= buf.contents.len() {
                                     buf.cursor_pos.line = buf.contents.len() - 1;
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
-                                {
-                                    buf.cursor_pos.idx =
-                                        buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
                                 let mut ret = vec![];
                                 for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
