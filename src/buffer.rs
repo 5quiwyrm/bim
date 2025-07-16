@@ -10,6 +10,14 @@ use std::{
     fs, time,
 };
 
+pub fn savable(path: &str) -> bool {
+    match path {
+        "*scratch" => false,
+        "*direx" => false,
+        _ => true,
+    }
+}
+
 /// Prettifies events to string for printing.
 pub fn pretty_str_event(event: &event::Event) -> String {
     if let event::Event::Key(key) = event {
@@ -228,7 +236,7 @@ impl Buffer {
     pub fn new(filepath: &str) -> Self {
         let contents: Vec<String> = fs::read_to_string(filepath)
             .unwrap_or({
-                if filepath != "scratch" {
+                if filepath != "*scratch" {
                     _ = fs::File::create(filepath).map_err(|_| {
                         println!("Illegal filepath, proceeding to scratch buffer...");
                     });
@@ -384,7 +392,7 @@ impl Buffer {
 
     #[inline]
     pub fn save(&mut self) {
-        if self.filepath != *"scratch" {
+        if savable(&self.filepath) {
             if let Some(BimVar::Bool(changed)) = self.vars.get_mut("changed") {
                 if *changed {
                     *changed = false;

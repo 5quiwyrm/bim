@@ -14,6 +14,7 @@ use buffer::*;
 pub mod nav;
 use nav::*;
 pub mod autocomplete;
+pub mod direx;
 pub mod languages;
 pub mod snippets;
 
@@ -145,7 +146,7 @@ pub fn main() {
     let path = if args.peek().is_some() {
         args.collect::<Vec<String>>().join(" ")
     } else {
-        String::from("scratch")
+        String::from("*scratch")
     };
     if path.ends_with(".exe") {
         println!("You shouldn't do this");
@@ -1061,6 +1062,37 @@ pub fn main() {
                                     }
                                 }
                                 buf.alert = Alert::new(&ret, 500_000);
+                            }
+                            KeyCode::Char('d') => {
+                                buf.save();
+                                buf.buffer_history.hist.push("*direx".to_string());
+                                buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
+                                buf.filepath = "*direx".to_string();
+                                buf.contents = direx::get_dirs();
+                                buf.mode = return_mode;
+                                if buf.cursor_pos.line >= buf.contents.len() {
+                                    buf.cursor_pos.line = buf.contents.len() - 1;
+                                }
+                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                }
+                                buf.update_highlighting();
+                            }
+                            KeyCode::Char('f') => {
+                                buf.save();
+                                let newpath = &buf.contents[buf.cursor_pos.line];
+                                buf.buffer_history.hist.push(newpath.clone());
+                                buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
+                                buf.filepath = newpath.clone();
+                                buf.reload_file();
+                                buf.mode = return_mode;
+                                if buf.cursor_pos.line >= buf.contents.len() {
+                                    buf.cursor_pos.line = buf.contents.len() - 1;
+                                }
+                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                }
+                                buf.update_highlighting();
                             }
                             _ => {}
                         },
