@@ -312,7 +312,6 @@ pub fn main() {
                                             buf.cursor_pos.idx =
                                                 buf.contents[buf.cursor_pos.line].len();
                                         }
-                                        buf.add_tokens();
                                     }
                                     Mode::Snippet => {
                                         let sniplines = buf.snippets.query(&buf.temp_str);
@@ -332,7 +331,6 @@ pub fn main() {
                                                 .insert(buf.cursor_pos.line + i + 1, ins_line);
                                         }
                                         buf.update_highlighting();
-                                        buf.add_tokens();
                                         buf.mode = return_mode;
                                     }
                                     Mode::Tee => {
@@ -373,7 +371,6 @@ pub fn main() {
                                         buf.fast_backspace();
                                     }
                                     buf.update_highlighting();
-                                    buf.add_tokens();
                                 }
                             }
                             KeyCode::Char(c) => {
@@ -437,7 +434,6 @@ pub fn main() {
                                 buf.cursor_pos.idx += buf.lang.indent_size();
                                 buf.indent_lvl += 1;
                                 buf.update_highlighting();
-                                buf.add_tokens();
                             }
                             _ => {}
                         },
@@ -539,7 +535,6 @@ pub fn main() {
                                     buf.cursor_pos.line = contentlen - 1;
                                 }
                                 buf.update_highlighting();
-                                buf.add_tokens();
                             }
                             KeyCode::Char(',') => {
                                 if buf.indent_lvl != 0 {
@@ -583,7 +578,6 @@ pub fn main() {
                                                     .to_string();
                                             }
                                             buf.update_highlighting();
-                                            buf.add_tokens();
                                         }
                                         Err(e) => {
                                             buf.alert = Alert::new(&[e], 1_000_000);
@@ -608,7 +602,6 @@ pub fn main() {
                                                     format!("{}{}", prefix, buf.contents[i]);
                                             }
                                             buf.update_highlighting();
-                                            buf.add_tokens();
                                         }
                                         Err(e) => {
                                             buf.alert = Alert::new(&[e], 1_000_000);
@@ -712,7 +705,6 @@ pub fn main() {
                                     buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
                                 buf.update_highlighting();
-                                buf.add_tokens();
                             }
                             KeyCode::Char('r') => {
                                 if buf.mode == Mode::ReplaceStr {
@@ -989,7 +981,6 @@ pub fn main() {
                                 }
                                 if last == '\n' {
                                     buf.update_highlighting();
-                                    buf.add_tokens();
                                 } else {
                                     buf.type_char(last);
                                 }

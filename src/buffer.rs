@@ -394,6 +394,7 @@ impl Buffer {
                     writecontent.push('\n');
                     _ = fs::write(&self.filepath, writecontent);
                     self.alert = Alert::new(&["save".to_string()], 1_000_000);
+                    self.add_tokens();
                 }
             }
         }
