@@ -299,6 +299,13 @@ pub fn main() {
                                     }
                                     Mode::OpenFile => {
                                         buf.save();
+                                        if buf.temp_str.ends_with(".exe") {
+                                            buf.alert = Alert::new(
+                                                &[String::from("You shouldn't do that")],
+                                                1_000_000,
+                                            );
+                                            continue;
+                                        }
                                         buf.buffer_history.hist.push(buf.temp_str.clone());
                                         buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
                                         buf.filepath = buf.temp_str.clone();
@@ -1068,7 +1075,7 @@ pub fn main() {
                                 buf.buffer_history.hist.push("*direx".to_string());
                                 buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
                                 buf.filepath = "*direx".to_string();
-                                buf.contents = direx::get_dirs();
+                                buf.reload_file();
                                 buf.mode = return_mode;
                                 if buf.cursor_pos.line >= buf.contents.len() {
                                     buf.cursor_pos.line = buf.contents.len() - 1;
@@ -1079,20 +1086,29 @@ pub fn main() {
                                 buf.update_highlighting();
                             }
                             KeyCode::Char('f') => {
-                                buf.save();
-                                let newpath = &buf.contents[buf.cursor_pos.line];
-                                buf.buffer_history.hist.push(newpath.clone());
-                                buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
-                                buf.filepath = newpath.clone();
-                                buf.reload_file();
-                                buf.mode = return_mode;
-                                if buf.cursor_pos.line >= buf.contents.len() {
-                                    buf.cursor_pos.line = buf.contents.len() - 1;
+                                if buf.filepath == "*direx" {
+                                    buf.save();
+                                    let newpath = &buf.contents[buf.cursor_pos.line];
+                                    if newpath.ends_with(".exe") {
+                                        buf.alert = Alert::new(
+                                            &[String::from("You shouldn't do that")],
+                                            1_000_000,
+                                        );
+                                        continue;
+                                    }
+                                    buf.buffer_history.hist.push(newpath.clone());
+                                    buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
+                                    buf.filepath = newpath.clone();
+                                    buf.reload_file();
+                                    buf.mode = return_mode;
+                                    if buf.cursor_pos.line >= buf.contents.len() {
+                                        buf.cursor_pos.line = buf.contents.len() - 1;
+                                    }
+                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
+                                        buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                    }
+                                    buf.update_highlighting();
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
-                                }
-                                buf.update_highlighting();
                             }
                             _ => {}
                         },

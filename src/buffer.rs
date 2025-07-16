@@ -3,6 +3,7 @@
 use crate::autocomplete;
 use crate::languages;
 use crate::snippets;
+use crate::direx;
 use crossterm::{event, terminal};
 use std::{
     collections::HashMap,
@@ -484,11 +485,16 @@ impl Buffer {
     }
 
     pub fn reload_file(&mut self) {
-        self.contents = fs::read_to_string(&self.filepath)
-            .unwrap_or("\n".to_string())
-            .lines()
-            .map(|s| s.to_string())
-            .collect();
+        if self.filepath == *"*direx" {
+            self.contents = direx::get_dirs();
+        } else {
+            self.contents = fs::read_to_string(&self.filepath)
+                .unwrap_or("\n".to_string())
+                .lines()
+                .map(|s| s.to_string())
+                .collect();
+            self.save();
+        }
         self.lang = if self.contents[0].contains("use-ext:") {
             languages::get_lang(&self.contents[0])
         } else {
@@ -500,7 +506,6 @@ impl Buffer {
             snippets::get_snippets(&self.filepath)
         };
         self.update_highlighting();
-        self.save();
     }
 
     pub fn print(&mut self, event: &event::Event) {
