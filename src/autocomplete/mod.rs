@@ -16,6 +16,13 @@ pub trait AutoComplete {
 pub mod default;
 use default::*;
 
-pub fn get_autocomplete_engine(_path: &str) -> Box<dyn AutoComplete> {
-    Box::new(Default::new())
+pub mod markdown;
+use markdown::*;
+
+pub fn get_autocomplete_engine(path: &str) -> Box<dyn AutoComplete> {
+    if MARKDOWN.is_kind(path) {
+        Box::new(MARKDOWN)
+    } else {
+        Box::new(Default::new())
+    }
 }

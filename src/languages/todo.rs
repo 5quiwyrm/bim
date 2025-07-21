@@ -14,7 +14,7 @@ impl Language for Todo {
             .map(|l| {
                 StyledChar::colour_string(
                     l,
-                    if l.trim().len() > 4 {
+                    if l.trim().chars().count() > 4 {
                         match &(l.trim())[0..4] {
                             "[ ] " => "\x1b[33m",
                             "[ ]!" => "\x1b[31m",

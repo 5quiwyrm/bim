@@ -8,6 +8,7 @@
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::case_sensitive_file_extension_comparisons)]
 #![allow(clippy::new_without_default)]
+#![allow(clippy::match_like_matches_macro)]
 
 pub mod buffer;
 use buffer::*;
@@ -236,11 +237,13 @@ pub fn main() {
                                                 } else {
                                                     buf.cursor_pos.line = 0;
                                                 }
-                                                if buf.contents[buf.cursor_pos.line].len()
+                                                if buf.contents[buf.cursor_pos.line].chars().count()
                                                     < buf.cursor_pos.idx
                                                 {
-                                                    buf.cursor_pos.idx =
-                                                        buf.contents[buf.cursor_pos.line].len();
+                                                    buf.cursor_pos.idx = buf.contents
+                                                        [buf.cursor_pos.line]
+                                                        .chars()
+                                                        .count();
                                                 }
                                             }
                                         } else {
@@ -315,10 +318,10 @@ pub fn main() {
                                             buf.cursor_pos.line = buf.contents.len() - 1;
                                         }
                                         if buf.cursor_pos.idx
-                                            > buf.contents[buf.cursor_pos.line].len()
+                                            > buf.contents[buf.cursor_pos.line].chars().count()
                                         {
                                             buf.cursor_pos.idx =
-                                                buf.contents[buf.cursor_pos.line].len();
+                                                buf.contents[buf.cursor_pos.line].chars().count();
                                         }
                                     }
                                     Mode::Snippet => {
@@ -354,19 +357,45 @@ pub fn main() {
                                                 buf.indent_lvl -= 1;
                                             }
                                             if buf.cursor_pos.idx != 0 {
-                                                let linect: String = buf.contents
-                                                    [buf.cursor_pos.line]
-                                                    .drain(buf.cursor_pos.idx..)
-                                                    .collect();
+                                                let old = buf.contents[buf.cursor_pos.line].clone();
+                                                buf.contents[buf.cursor_pos.line].clear();
+                                                let mut chrs = old.chars().enumerate().peekable();
+                                                'pushing: loop {
+                                                    match chrs.peek() {
+                                                        Some((i, ch))
+                                                            if *i != buf.cursor_pos.idx =>
+                                                        {
+                                                            buf.contents[buf.cursor_pos.line]
+                                                                .push(*ch);
+                                                        }
+                                                        _ => {
+                                                            break 'pushing;
+                                                        }
+                                                    }
+                                                    _ = chrs.next();
+                                                }
+                                                let linect: String = chrs.map(|(_, c)| c).collect();
                                                 buf.newline_below(&linect);
                                             }
                                             buf.move_up();
                                             buf.indent_lvl += 1;
                                             buf.newline_below("");
                                         } else {
-                                            let linect: String = buf.contents[buf.cursor_pos.line]
-                                                .drain(buf.cursor_pos.idx..)
-                                                .collect();
+                                            let old = buf.contents[buf.cursor_pos.line].clone();
+                                            buf.contents[buf.cursor_pos.line].clear();
+                                            let mut chrs = old.chars().enumerate().peekable();
+                                            'pushing: loop {
+                                                match chrs.peek() {
+                                                    Some((i, ch)) if *i != buf.cursor_pos.idx => {
+                                                        buf.contents[buf.cursor_pos.line].push(*ch);
+                                                    }
+                                                    _ => {
+                                                        break 'pushing;
+                                                    }
+                                                }
+                                                _ = chrs.next();
+                                            }
+                                            let linect: String = chrs.map(|(_, c)| c).collect();
                                             buf.newline_below(&linect);
                                         }
                                     }
@@ -385,12 +414,15 @@ pub fn main() {
                                 match buf.mode {
                                     Mode::Find => {
                                         buf.find_str.push(c);
+                                        continue;
                                     }
                                     Mode::ReplaceStr => {
                                         buf.replace_str.push(c);
+                                        continue;
                                     }
                                     m if m.show_temp() => {
                                         buf.temp_str.push(c);
+                                        continue;
                                     }
                                     _ => {
                                         buf.type_char(c);
@@ -431,7 +463,8 @@ pub fn main() {
                             }
                             KeyCode::End => {
                                 if !buf.contents[buf.cursor_pos.line].is_empty() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                             }
                             KeyCode::Tab => {
@@ -461,10 +494,11 @@ pub fn main() {
                                     if buf.cursor_pos.line >= buf.contents.len() {
                                         buf.cursor_pos.line = buf.contents.len() - 1;
                                     }
-                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
+                                    if buf.cursor_pos.idx
+                                        > buf.contents[buf.cursor_pos.line].chars().count()
                                     {
                                         buf.cursor_pos.idx =
-                                            buf.contents[buf.cursor_pos.line].len();
+                                            buf.contents[buf.cursor_pos.line].chars().count();
                                     }
                                     let mut ret: Vec<String> = vec![];
                                     for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
@@ -511,7 +545,7 @@ pub fn main() {
                                 } else {
                                     buf.cursor_pos.line = 0;
                                 }
-                                let linelen = buf.contents[buf.cursor_pos.line].len();
+                                let linelen = buf.contents[buf.cursor_pos.line].chars().count();
                                 if buf.cursor_pos.idx > linelen {
                                     buf.cursor_pos.idx = linelen;
                                 }
@@ -525,7 +559,7 @@ pub fn main() {
                                 } else {
                                     buf.cursor_pos.line += height;
                                 }
-                                let linelen = buf.contents[buf.cursor_pos.line].len();
+                                let linelen = buf.contents[buf.cursor_pos.line].chars().count();
                                 if buf.cursor_pos.idx > linelen {
                                     buf.cursor_pos.idx = linelen;
                                 }
@@ -554,8 +588,11 @@ pub fn main() {
                             }
                             KeyCode::Char('I') => {
                                 buf.adjust_indent();
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx
+                                    > buf.contents[buf.cursor_pos.line].chars().count()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                             }
                             KeyCode::Char('<') => {
@@ -566,7 +603,8 @@ pub fn main() {
                                         if buf.cursor_pos.idx >= indent_size {
                                             buf.cursor_pos.idx -= indent_size;
                                         }
-                                        let linelen = buf.contents[buf.cursor_pos.line].len();
+                                        let linelen =
+                                            buf.contents[buf.cursor_pos.line].chars().count();
                                         if buf.cursor_pos.idx > linelen {
                                             buf.cursor_pos.idx = linelen;
                                         }
@@ -651,7 +689,7 @@ pub fn main() {
                                             .find(buf.find_str.as_str())
                                         {
                                             buf.cursor_pos.idx += p;
-                                            buf.cursor_pos.idx += buf.find_str.len();
+                                            buf.cursor_pos.idx += buf.find_str.chars().count();
                                             break 'findfwd;
                                         }
                                         buf.cursor_pos.idx = 0;
@@ -671,12 +709,12 @@ pub fn main() {
                                             .rfind(buf.find_str.as_str())
                                         {
                                             buf.cursor_pos.idx = p;
-                                            buf.cursor_pos.idx += buf.find_str.len();
+                                            buf.cursor_pos.idx += buf.find_str.chars().count();
                                             break 'findfwd;
                                         }
                                         let status = buf.move_up();
                                         buf.cursor_pos.idx =
-                                            buf.contents[buf.cursor_pos.line].len();
+                                            buf.contents[buf.cursor_pos.line].chars().count();
                                         if !status {
                                             buf.cursor_pos = prevpos;
                                             break 'findfwd;
@@ -702,15 +740,18 @@ pub fn main() {
                             }
                             KeyCode::Char('h') => {
                                 buf.contents[buf.cursor_pos.line].replace_range(
-                                    (if buf.cursor_pos.idx >= buf.find_str.len() {
-                                        buf.cursor_pos.idx - buf.find_str.len()
+                                    (if buf.cursor_pos.idx >= buf.find_str.chars().count() {
+                                        buf.cursor_pos.idx - buf.find_str.chars().count()
                                     } else {
                                         0
                                     })..buf.cursor_pos.idx,
                                     &buf.replace_str,
                                 );
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx
+                                    > buf.contents[buf.cursor_pos.line].chars().count()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                                 buf.update_highlighting();
                             }
@@ -862,8 +903,11 @@ pub fn main() {
                                 {
                                     buf.cursor_pos.line -= 1;
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx
+                                    > buf.contents[buf.cursor_pos.line].chars().count()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                             }
                             KeyCode::Char(']') => {
@@ -878,8 +922,11 @@ pub fn main() {
                                 {
                                     buf.cursor_pos.line += 1;
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx
+                                    > buf.contents[buf.cursor_pos.line].chars().count()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                             }
                             KeyCode::Char('N') | KeyCode::Char('v') => {
@@ -903,16 +950,19 @@ pub fn main() {
                                 match x {
                                     '1' | '2' | '3' | '4' | '5' => {
                                         let replace_str = match x {
-                                            '1' => matches[0].clone(),
-                                            '2' => matches[1].clone(),
-                                            '3' => matches[2].clone(),
-                                            '4' => matches[3].clone(),
-                                            '5' => matches[4].clone(),
+                                            '1' => matches.get(0).map_or("", |c| c),
+                                            '2' => matches.get(1).map_or("", |c| c),
+                                            '3' => matches.get(2).map_or("", |c| c),
+                                            '4' => matches.get(3).map_or("", |c| c),
+                                            '5' => matches.get(4).map_or("", |c| c),
                                             _ => {
                                                 querylen = 0;
-                                                String::new()
+                                                ""
                                             }
                                         };
+                                        if replace_str.is_empty() {
+                                            continue;
+                                        }
                                         buf.contents[buf.cursor_pos.line].replace_range(
                                             (if buf.cursor_pos.idx >= querylen {
                                                 buf.cursor_pos.idx - querylen
@@ -920,15 +970,15 @@ pub fn main() {
                                                 0
                                             })
                                                 ..buf.cursor_pos.idx,
-                                            &replace_str,
+                                            replace_str,
                                         );
-                                        buf.cursor_pos.idx += replace_str.len();
+                                        buf.cursor_pos.idx += replace_str.chars().count();
                                         buf.cursor_pos.idx -= querylen;
                                         if buf.cursor_pos.idx
-                                            > buf.contents[buf.cursor_pos.line].len()
+                                            > buf.contents[buf.cursor_pos.line].chars().count()
                                         {
                                             buf.cursor_pos.idx =
-                                                buf.contents[buf.cursor_pos.line].len();
+                                                buf.contents[buf.cursor_pos.line].chars().count();
                                         }
                                         buf.update_highlighting();
                                     }
@@ -973,8 +1023,11 @@ pub fn main() {
                                 if buf.cursor_pos.line >= buf.contents.len() {
                                     buf.cursor_pos.line = buf.contents.len() - 1;
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx
+                                    > buf.contents[buf.cursor_pos.line].chars().count()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                                 print!("\x1bc\x1b[?25l");
                             }
@@ -1032,8 +1085,11 @@ pub fn main() {
                                 if buf.cursor_pos.line >= buf.contents.len() {
                                     buf.cursor_pos.line = buf.contents.len() - 1;
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx
+                                    > buf.contents[buf.cursor_pos.line].chars().count()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                                 buf.alert = Alert::new(&buf.buffer_history.display(), 500_000);
                             }
@@ -1049,8 +1105,11 @@ pub fn main() {
                                 if buf.cursor_pos.line >= buf.contents.len() {
                                     buf.cursor_pos.line = buf.contents.len() - 1;
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx
+                                    > buf.contents[buf.cursor_pos.line].chars().count()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                                 let mut ret = vec![];
                                 for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
@@ -1063,8 +1122,7 @@ pub fn main() {
                                 buf.alert = Alert::new(&ret, 500_000);
                             }
                             KeyCode::Char('d') => {
-                                match buf.buffer_history.hist.iter()
-                                    .position(|x| x == "*direx") {
+                                match buf.buffer_history.hist.iter().position(|x| x == "*direx") {
                                     Some(i) => {
                                         buf.buffer_history.head = i;
                                         buf.save();
@@ -1081,8 +1139,11 @@ pub fn main() {
                                 if buf.cursor_pos.line >= buf.contents.len() {
                                     buf.cursor_pos.line = buf.contents.len() - 1;
                                 }
-                                if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                    buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                if buf.cursor_pos.idx
+                                    > buf.contents[buf.cursor_pos.line].chars().count()
+                                {
+                                    buf.cursor_pos.idx =
+                                        buf.contents[buf.cursor_pos.line].chars().count();
                                 }
                                 buf.update_highlighting();
                             }
@@ -1105,10 +1166,11 @@ pub fn main() {
                                     if buf.cursor_pos.line >= buf.contents.len() {
                                         buf.cursor_pos.line = buf.contents.len() - 1;
                                     }
-                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
+                                    if buf.cursor_pos.idx
+                                        > buf.contents[buf.cursor_pos.line].chars().count()
                                     {
                                         buf.cursor_pos.idx =
-                                            buf.contents[buf.cursor_pos.line].len();
+                                            buf.contents[buf.cursor_pos.line].chars().count();
                                     }
                                     buf.update_highlighting();
                                 }
@@ -1148,8 +1210,6 @@ pub fn main() {
         if cfg!(feature = "profile") {
             printing_time += start.elapsed().as_micros();
             printing_time >>= 1;
-        }
-        if cfg!(feature = "profile") {
             print!(
                 "{: <width$}",
                 format!(

@@ -21,6 +21,9 @@ use c::*;
 pub mod html;
 use html::*;
 
+pub mod markdown;
+use markdown::*;
+
 pub fn get_snippets(path: &str) -> Box<dyn Snippet> {
     if TODO.is_kind(path) {
         Box::new(TODO)
@@ -28,6 +31,8 @@ pub fn get_snippets(path: &str) -> Box<dyn Snippet> {
         Box::new(CLANG)
     } else if HTML.is_kind(path) {
         Box::new(HTML)
+    } else if MARKDOWN.is_kind(path) {
+        Box::new(MARKDOWN)
     } else {
         Box::new(TEXT)
     }

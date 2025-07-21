@@ -43,7 +43,7 @@ impl AutoComplete for Default {
         candidates.sort_by(|a, b| a.1.cmp(&b.1));
         (
             candidates.iter().map(|a| a.0.clone()).collect(),
-            query.len(),
+            query.chars().count(),
         )
     }
     fn add_tokens(&mut self, contents: &[String]) {
@@ -63,9 +63,9 @@ impl AutoComplete for Default {
 // Stolen from https://github.com/TheAlgorithms/Rust/blob/master/src/string/levenshtein_distance.rs
 pub fn optimized_levenshtein_distance(string1: &str, string2: &str) -> usize {
     if string1.is_empty() {
-        return string2.len();
+        return string2.chars().count();
     }
-    let l1 = string1.len();
+    let l1 = string1.chars().count();
     let mut prev_dist: Vec<usize> = (0..=l1).collect();
 
     for (row, c2) in string2.chars().enumerate() {

@@ -348,7 +348,7 @@ impl Buffer {
         if self.cursor_pos.idx == 0 {
             if self.cursor_pos.line != 0 {
                 self.cursor_pos.line -= 1;
-                self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
+                self.cursor_pos.idx = self.contents[self.cursor_pos.line].chars().count();
             } else {
                 return false;
             }
@@ -362,7 +362,7 @@ impl Buffer {
     /// Return value signifies whether the cursor actually moved.
     #[inline]
     pub fn move_right(&mut self) -> bool {
-        if self.cursor_pos.idx == self.contents[self.cursor_pos.line].len()
+        if self.cursor_pos.idx == self.contents[self.cursor_pos.line].chars().count()
             || self.contents[self.cursor_pos.line].is_empty()
         {
             if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {
@@ -383,8 +383,8 @@ impl Buffer {
     pub fn move_up(&mut self) -> bool {
         if self.cursor_pos.line != 0 {
             self.cursor_pos.line -= 1;
-            if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].len() {
-                self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
+            if self.cursor_pos.idx >= self.contents[self.cursor_pos.line].chars().count() {
+                self.cursor_pos.idx = self.contents[self.cursor_pos.line].chars().count();
             }
             true
         } else {
@@ -398,8 +398,8 @@ impl Buffer {
     pub fn move_down(&mut self) -> bool {
         if self.cursor_pos.line + 1 != self.contents.len() && !self.contents.is_empty() {
             self.cursor_pos.line += 1;
-            if self.cursor_pos.idx > self.contents[self.cursor_pos.line].len() {
-                self.cursor_pos.idx = self.contents[self.cursor_pos.line].len();
+            if self.cursor_pos.idx > self.contents[self.cursor_pos.line].chars().count() {
+                self.cursor_pos.idx = self.contents[self.cursor_pos.line].chars().count();
             }
             true
         } else {
@@ -426,61 +426,63 @@ impl Buffer {
     }
 
     pub fn backspace(&mut self) -> Option<char> {
-        let t = self.cursor_pos.idx;
-        if self.mode == Mode::Tee {
-            _ = self.replace_str.pop();
-        }
-        if t == 0 {
-            if self.cursor_pos.line != 0 {
-                let currline = self.contents[self.cursor_pos.line].clone();
-                let oldlen = self.contents[self.cursor_pos.line - 1].len();
-                self.contents[self.cursor_pos.line - 1].push_str(&currline);
-                self.contents.remove(self.cursor_pos.line);
-                self.cursor_pos.line -= 1;
-                self.cursor_pos.idx = oldlen;
-                self.update_highlighting();
-                Some('\n')
-            } else if !self.contents[0].is_empty() {
-                let ret = Some(self.contents[0].remove(0));
-                self.update_highlighting();
-                ret
-            } else {
-                return None;
-            }
-        } else {
-            self.cursor_pos.idx -= 1;
-            let ret = Some(self.contents[self.cursor_pos.line].remove(t - 1));
-            self.update_highlighting();
-            ret
-        }
+        let ret = self.fast_backspace();
+        self.update_highlighting();
+        ret
     }
 
     // This doesn't reload the highlighting, so use at your own risk.
     pub fn fast_backspace(&mut self) -> Option<char> {
         let t = self.cursor_pos.idx;
+        if self.mode == Mode::Tee {
+            self.replace_str.pop();
+        }
         if t == 0 {
             if self.cursor_pos.line != 0 {
                 let currline = self.contents[self.cursor_pos.line].clone();
-                let oldlen = self.contents[self.cursor_pos.line - 1].len();
+                let oldlen = self.contents[self.cursor_pos.line - 1].chars().count();
                 self.contents[self.cursor_pos.line - 1].push_str(&currline);
                 self.contents.remove(self.cursor_pos.line);
                 self.cursor_pos.line -= 1;
                 self.cursor_pos.idx = oldlen;
                 Some('\n')
             } else if !self.contents[0].is_empty() {
-                Some(self.contents[0].remove(0))
+                let old_str = self.contents[0].clone();
+                let mut old = old_str.chars();
+                let ret = old.next();
+                self.contents[0].clear();
+                self.contents[0] = old.collect();
+                ret
             } else {
                 None
             }
         } else {
             self.cursor_pos.idx -= 1;
-            Some(self.contents[self.cursor_pos.line].remove(t - 1))
+            let old_str = self.contents[self.cursor_pos.line].clone();
+            self.contents[self.cursor_pos.line].clear();
+            let mut old = old_str.chars().enumerate();
+            for (_, c) in old.clone().filter(|(idx, _)| *idx != t - 1) {
+                self.contents[self.cursor_pos.line].push(c);
+            }
+            old.nth(t - 1).map(|(_, a)| a)
         }
     }
 
     #[inline]
     pub fn type_char(&mut self, ch: char) {
-        self.contents[self.cursor_pos.line].insert(self.cursor_pos.idx, ch);
+        let old = self.contents[self.cursor_pos.line].clone();
+        self.contents[self.cursor_pos.line].clear();
+        let mut typed = false;
+        for (idx, c) in old.chars().enumerate() {
+            if idx == self.cursor_pos.idx && !typed {
+                self.contents[self.cursor_pos.line].push(ch);
+                typed = true;
+            }
+            self.contents[self.cursor_pos.line].push(c);
+        }
+        if !typed {
+            self.contents[self.cursor_pos.line].push(ch);
+        }
         self.cursor_pos.idx += 1;
         if self.mode == Mode::Tee {
             self.replace_str.push(ch);
