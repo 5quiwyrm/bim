@@ -1,9 +1,9 @@
 //! Buffer and cursor handling module.
 
 use crate::autocomplete;
+use crate::direx;
 use crate::languages;
 use crate::snippets;
-use crate::direx;
 use crossterm::{event, terminal};
 use std::{
     collections::HashMap,
@@ -192,6 +192,22 @@ impl Alert {
 pub struct BufferHistory {
     pub hist: Vec<String>,
     pub head: usize,
+}
+
+impl BufferHistory {
+    pub fn display(&self) -> Vec<String> {
+        self.hist
+            .iter()
+            .enumerate()
+            .map(|(i, v)| {
+                if i == self.head {
+                    format!("> {v}")
+                } else {
+                    format!("  {v}")
+                }
+            })
+            .collect()
+    }
 }
 
 /// Structure for storing the current displayed buffer.

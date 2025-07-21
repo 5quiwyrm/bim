@@ -13,7 +13,9 @@ pub fn get_dirs_rec(dir: &str) -> Vec<String> {
         let mut ignore = false;
         let display_str = path.display().to_string();
         for g in gitignore_file.lines() {
-            ignore = ignore || display_str.contains(g);
+            if !g.is_empty() {
+                ignore = ignore || display_str.contains(g);
+            }
         }
         if ignore {
             continue;

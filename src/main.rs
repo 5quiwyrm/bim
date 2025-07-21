@@ -1035,15 +1035,7 @@ pub fn main() {
                                 if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
                                     buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
                                 }
-                                let mut ret = vec![];
-                                for (idx, s) in buf.buffer_history.hist.iter().enumerate() {
-                                    if idx == buf.buffer_history.head {
-                                        ret.push(format!("> {s}"));
-                                    } else {
-                                        ret.push(format!("  {s}"));
-                                    }
-                                }
-                                buf.alert = Alert::new(&ret, 500_000);
+                                buf.alert = Alert::new(&buf.buffer_history.display(), 500_000);
                             }
                             KeyCode::Char('n') => {
                                 buf.buffer_history.head += 1;
@@ -1071,9 +1063,18 @@ pub fn main() {
                                 buf.alert = Alert::new(&ret, 500_000);
                             }
                             KeyCode::Char('d') => {
-                                buf.save();
-                                buf.buffer_history.hist.push("*direx".to_string());
-                                buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
+                                match buf.buffer_history.hist.iter()
+                                    .position(|x| x == "*direx") {
+                                    Some(i) => {
+                                        buf.buffer_history.head = i;
+                                        buf.save();
+                                    }
+                                    None => {
+                                        buf.save();
+                                        buf.buffer_history.hist.push("*direx".to_string());
+                                        buf.buffer_history.head = buf.buffer_history.hist.len() - 1;
+                                    }
+                                }
                                 buf.filepath = "*direx".to_string();
                                 buf.reload_file();
                                 buf.mode = return_mode;
@@ -1104,8 +1105,10 @@ pub fn main() {
                                     if buf.cursor_pos.line >= buf.contents.len() {
                                         buf.cursor_pos.line = buf.contents.len() - 1;
                                     }
-                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len() {
-                                        buf.cursor_pos.idx = buf.contents[buf.cursor_pos.line].len();
+                                    if buf.cursor_pos.idx > buf.contents[buf.cursor_pos.line].len()
+                                    {
+                                        buf.cursor_pos.idx =
+                                            buf.contents[buf.cursor_pos.line].len();
                                     }
                                     buf.update_highlighting();
                                 }
