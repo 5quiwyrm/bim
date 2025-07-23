@@ -10,6 +10,7 @@ use std::{
     fmt::{self, Write},
     fs, time,
 };
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 pub fn savable(path: &str) -> bool {
     match path {
@@ -620,8 +621,14 @@ impl Buffer {
             }
             if linectr == self.cursor_pos.line {
                 let mut i = 0;
+                let mut wi = 0;
                 let id = self.indent_lvl * indent_size;
-                for ctnt in content[self.cursor_pos.line].iter().take(truewidth) {
+
+                'pl: for ctnt in content[self.cursor_pos.line].iter().take(truewidth) {
+                    wi += ctnt.ch.width_cjk().unwrap_or(0);
+                    if wi > truewidth {
+                        break 'pl;
+                    }
                     match i {
                         a if a == self.cursor_pos.idx => {
                             if self.mode != Mode::Nav {
@@ -650,7 +657,7 @@ impl Buffer {
                     }
                     i += 1;
                 }
-                while i < truewidth {
+                while wi < truewidth {
                     match i {
                         a if a == self.cursor_pos.idx => {
                             if self.mode != Mode::Nav {
@@ -670,24 +677,23 @@ impl Buffer {
                         }
                     }
                     i += 1;
+                    wi += 1;
                 }
-                tb_printed.push('\n');
-            } else if content[linectr].len() > truewidth {
-                content[linectr].iter().take(truewidth).for_each(|c| {
-                    _ = write!(&mut tb_printed, "{c}");
-                });
                 if cfg!(target_os = "windows") {
                     tb_printed.push('\n');
                 }
             } else {
-                let mut i = 0;
-                for c in &content[linectr] {
+                let mut wi = 0;
+                'pl: for c in content[linectr].iter() {
+                    wi += c.ch.width_cjk().unwrap_or(0);
+                    if wi > truewidth {
+                        break 'pl;
+                    }
                     _ = write!(&mut tb_printed, "{c}");
-                    i += 1;
                 }
-                while i < truewidth {
+                while wi < truewidth {
                     tb_printed.push(' ');
-                    i += 1;
+                    wi += 1;
                 }
                 if cfg!(target_os = "windows") {
                     tb_printed.push('\n');
@@ -710,11 +716,16 @@ impl Buffer {
             if ctr > 16 {
                 break 'count;
             }
-            _ = write!(
-                &mut tb_printed,
-                "\x1b[47m\x1b[30m{: <width$}\x1b[0m",
-                line.chars().take(width).collect::<String>(),
-            );
+            tb_printed.push_str("\x1b[47m\x1b[30m");
+            let mut wi = 0;
+            'pl: for c in line.chars() {
+                wi += c.width_cjk().unwrap_or(0);
+                if wi >= width {
+                    break 'pl;
+                }
+                tb_printed.push(c);
+            }
+            tb_printed.push_str("\x1b[0m");
             if cfg!(target_os = "windows") {
                 tb_printed.push('\n');
             }
@@ -748,9 +759,8 @@ impl Buffer {
                 style_time(self.iter_time),
                 pretty_str_event(event),
             );
-            let escape_code_size = 5;
-            if bottom_bar.len() > width + escape_code_size {
-                bottom_bar.truncate(width + escape_code_size);
+            while bottom_bar.width_cjk() > width {
+                _ = bottom_bar.pop();
             }
             if cfg!(target_os = "windows") {
                 _ = write!(&mut tb_printed, "{bottom_bar: <width$}\x1b[0m");
