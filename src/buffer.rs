@@ -644,7 +644,7 @@ impl Buffer {
                                 _ = write!(&mut tb_printed, "\x1b[33m{}\x1b[0m", ctnt.ch);
                             }
                         }
-                        c if c == ruler_idx => {
+                        _c if wi > ruler_idx => {
                             if ctnt.ch == ' ' {
                                 _ = write!(&mut tb_printed, "\x1b[2;31m|\x1b[0m");
                             } else {
@@ -724,6 +724,10 @@ impl Buffer {
                     break 'pl;
                 }
                 tb_printed.push(c);
+            }
+            while wi < width {
+                tb_printed.push(' ');
+                wi += 1;
             }
             tb_printed.push_str("\x1b[0m");
             if cfg!(target_os = "windows") {
