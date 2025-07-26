@@ -96,6 +96,15 @@ impl Mode {
             _ => Mode::Default,
         }
     }
+
+    /// Colour of cursor during mode.
+    pub fn cursor_style(&self) -> &'static str {
+        use Mode::*;
+        match self {
+            Nav => "\x1b[46m\x1b[30m",
+            _ => "\x1b[47m\x1b[30m",
+        }
+    }
 }
 
 impl fmt::Display for Mode {
@@ -631,11 +640,19 @@ impl Buffer {
                     }
                     match i {
                         a if a == self.cursor_pos.idx => {
+                            /*
                             if self.mode != Mode::Nav {
                                 _ = write!(&mut tb_printed, "\x1b[47m\x1b[30m{}\x1b[0m", ctnt.ch);
                             } else {
                                 _ = write!(&mut tb_printed, "\x1b[46m\x1b[30m{}\x1b[0m", ctnt.ch);
                             }
+                            */
+                            _ = write!(
+                                &mut tb_printed,
+                                "{}{}\x1b[0m",
+                                self.mode.cursor_style(),
+                                ctnt.ch
+                            );
                         }
                         b if b == id => {
                             if ctnt.ch == ' ' {
@@ -660,11 +677,7 @@ impl Buffer {
                 while wi < truewidth {
                     match i {
                         a if a == self.cursor_pos.idx => {
-                            if self.mode != Mode::Nav {
-                                _ = write!(&mut tb_printed, "\x1b[47m\x1b[30m \x1b[0m");
-                            } else {
-                                _ = write!(&mut tb_printed, "\x1b[46m\x1b[30m \x1b[0m");
-                            }
+                            _ = write!(&mut tb_printed, "{} \x1b[0m", self.mode.cursor_style(),);
                         }
                         b if b == id => {
                             tb_printed.push_str("\x1b[2;33m|\x1b[0m");
