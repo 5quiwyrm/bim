@@ -9,6 +9,7 @@
 #![allow(clippy::case_sensitive_file_extension_comparisons)]
 #![allow(clippy::new_without_default)]
 #![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::get_first)]
 
 pub mod buffer;
 use buffer::*;
@@ -964,11 +965,7 @@ pub fn main() {
                                             continue;
                                         }
                                         buf.contents[buf.cursor_pos.line].replace_range(
-                                            (if buf.cursor_pos.idx >= querylen {
-                                                buf.cursor_pos.idx - querylen
-                                            } else {
-                                                0
-                                            })
+                                            buf.cursor_pos.idx.saturating_sub(querylen)
                                                 ..buf.cursor_pos.idx,
                                             replace_str,
                                         );
