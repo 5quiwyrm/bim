@@ -262,11 +262,13 @@ pub fn main() {
                                             Ok((f, t)) => {
                                                 let paste_contents =
                                                     &buf.contents.clone()[f - 1..t];
+                                                buf.persistent_buffer.clear();
                                                 for (i, l) in paste_contents.iter().enumerate() {
                                                     buf.contents.insert(
                                                         buf.cursor_pos.line + i,
                                                         l.to_string(),
                                                     );
+                                                    buf.persistent_buffer.push(l.to_string());
                                                 }
                                                 buf.update_highlighting();
                                             }
@@ -888,6 +890,9 @@ pub fn main() {
                                     buf.cursor_pos.line,
                                     buf.contents[buf.cursor_pos.line].clone(),
                                 );
+                                buf.persistent_buffer.clear();
+                                buf.persistent_buffer
+                                    .push(buf.contents[buf.cursor_pos.line].clone());
                                 buf.update_highlighting();
                                 buf.move_down();
                             }
@@ -1049,6 +1054,12 @@ pub fn main() {
                                 } else {
                                     buf.mode = Mode::Command;
                                 }
+                            }
+                            KeyCode::Char('P') => {
+                                for (i, l) in buf.persistent_buffer.iter().enumerate() {
+                                    buf.contents.insert(buf.cursor_pos.line + i, l.to_string());
+                                }
+                                buf.update_highlighting();
                             }
                             _ => {}
                         },

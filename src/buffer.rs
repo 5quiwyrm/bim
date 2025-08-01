@@ -244,6 +244,8 @@ pub struct Buffer {
     pub replace_str: String,
     /// Temporary buffer for all purposes.
     pub temp_str: String,
+    /// Persistent buffer for all purposes.
+    pub persistent_buffer: Vec<String>,
     /// Current indent level. This is language agnostic.
     pub indent_lvl: usize,
     /// Current language. Used for determining indent size and highlighting.
@@ -321,6 +323,7 @@ impl Buffer {
             find_str: String::new(),
             replace_str: String::new(),
             temp_str: String::new(),
+            persistent_buffer: Vec::new(),
             indent_lvl: 0,
             lang,
             snippets,
@@ -330,6 +333,7 @@ impl Buffer {
             mode: Mode::Nav,
         }
     }
+
     #[inline]
     pub fn add_tokens(&mut self) {
         self.autocomplete
