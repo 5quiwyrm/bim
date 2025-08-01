@@ -3,11 +3,11 @@
 //! words and a levenshtein distance search.
 
 use crate::Buffer;
-use crate::autocomplete::AutoComplete;
+use crate::autocomplete::{AutoComplete, UpdateRequest};
 use std::collections::HashMap;
 
 pub struct Default {
-    tokens: HashMap<String, ()>,
+    tokens: HashMap<String, Vec<String>>,
 }
 
 impl Default {
@@ -36,20 +36,37 @@ impl AutoComplete for Default {
             }
         }
         query = query.chars().rev().collect();
-        let mut candidates: Vec<(String, usize)> = vec![];
-        for tk in self.tokens.keys() {
-            candidates.push((tk.to_string(), optimized_levenshtein_distance(&query, tk)))
+        let mut candidates: HashMap<&str, ()> = HashMap::new();
+        for (_, tokens) in self.tokens.iter() {
+            for tk in tokens {
+                candidates.insert(tk, ());
+            }
         }
-        candidates.sort_by(|a, b| a.1.cmp(&b.1));
+        let mut calculated_candidates: Vec<(String, usize)> = candidates
+            .keys()
+            .map(|tk| (tk.to_string(), optimized_levenshtein_distance(tk, &query)))
+            .collect();
+        calculated_candidates.sort_by(|a, b| a.1.cmp(&b.1));
         (
-            candidates.iter().map(|a| a.0.clone()).collect(),
+            calculated_candidates.iter().map(|a| a.0.clone()).collect(),
             query.chars().count(),
         )
     }
-    fn add_tokens(&mut self, contents: &[String]) {
-        let contents_joined = contents.join(" ");
-        for tk in contents_joined.split(isnt_token_char) {
-            _ = self.tokens.insert(tk.to_string(), ());
+    fn add_tokens(&mut self, request: UpdateRequest) {
+        match request {
+            UpdateRequest::Whole {
+                filepath,
+                new_contents,
+            } => {
+                let contents_joined = new_contents.join(" ");
+                _ = self.tokens.insert(
+                    filepath.to_string(),
+                    contents_joined
+                        .split(isnt_token_char)
+                        .map(|t| t.to_string())
+                        .collect(),
+                );
+            }
         }
     }
     fn is_kind(&self, _path: &str) -> bool {

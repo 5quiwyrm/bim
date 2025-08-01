@@ -11,4 +11,5 @@ unicode-width = "0.2.1"
 default = []
 profile = []
 nav-pro = []
+powershell = []
 

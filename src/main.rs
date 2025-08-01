@@ -28,6 +28,7 @@ use crossterm::{
 use std::{
     env::args,
     io::{self, Write},
+    process::Command,
     time::Instant,
 };
 
@@ -347,6 +348,47 @@ pub fn main() {
                                     }
                                     Mode::Tee => {
                                         buf.mode = return_mode;
+                                    }
+                                    Mode::Command => {
+                                        match Command::new(if cfg!(target_os = "windows") {
+                                            if cfg!(feature = "powershell") {
+                                                "pwsh"
+                                            } else {
+                                                "cmd"
+                                            }
+                                        } else {
+                                            "sh"
+                                        })
+                                        .arg("-c")
+                                        .arg(buf.temp_str.clone())
+                                        .output()
+                                        {
+                                            Ok(o) => {
+                                                let stdout_contents = String::from_utf8(o.stdout)
+                                                    .unwrap_or("".to_string());
+                                                _ = stdout_contents.trim();
+                                                let stderr_contents = String::from_utf8(o.stderr)
+                                                    .unwrap_or("".to_string());
+                                                _ = stderr_contents.trim();
+                                                buf.alert = Alert::new(
+                                                    &[
+                                                        stdout_contents,
+                                                        stderr_contents,
+                                                        format!("{}", o.status),
+                                                    ],
+                                                    5_000_000,
+                                                );
+                                            }
+                                            Err(_) => {
+                                                buf.alert = Alert::new(
+                                                    &["Command failed".to_string()],
+                                                    1_000_000,
+                                                );
+                                            }
+                                        }
+
+                                        buf.mode = return_mode;
+                                        buf.temp_str.clear();
                                     }
                                     _ => {
                                         if let Some('}' | ']' | ')') = buf.contents
@@ -998,6 +1040,14 @@ pub fn main() {
                                 let numbuf = format!("{} ", buf.cursor_pos.line + 1);
                                 for c in numbuf.chars() {
                                     buf.temp_str.push(c);
+                                }
+                            }
+                            KeyCode::Char('!') => {
+                                if buf.mode == Mode::Command {
+                                    buf.mode = return_mode;
+                                    buf.temp_str.clear();
+                                } else {
+                                    buf.mode = Mode::Command;
                                 }
                             }
                             _ => {}

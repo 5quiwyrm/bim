@@ -73,6 +73,8 @@ pub enum Mode {
     Indent,
     /// Mode switching mode.
     Switch,
+    /// Run shell command mode.
+    Command,
 }
 
 impl Mode {
@@ -93,6 +95,7 @@ impl Mode {
             "tee" | "t" => Mode::Tee,
             "nav" | "n" => Mode::Nav,
             "indent" | "i" => Mode::Indent,
+            "command" | "cmd" | "sh" | "!" => Mode::Command,
             _ => Mode::Default,
         }
     }
@@ -124,6 +127,7 @@ impl fmt::Display for Mode {
             Mode::Tee => write!(f, "tee"),
             Mode::Indent => write!(f, "indent"),
             Mode::Switch => write!(f, "switch to mode"),
+            Mode::Command => write!(f, "shell"),
         }
     }
 }
@@ -134,7 +138,7 @@ impl Mode {
         use Mode::*;
         match self {
             Default | Paste | Replace | Find | ReplaceStr | Tee => false,
-            Goto | Switch | OpenFile | Copy | Snippet | KillLines | Nav | Indent => true,
+            Goto | Switch | OpenFile | Copy | Snippet | KillLines | Nav | Indent | Command => true,
         }
     }
 }
@@ -328,7 +332,11 @@ impl Buffer {
     }
     #[inline]
     pub fn add_tokens(&mut self) {
-        self.autocomplete.add_tokens(&self.contents);
+        self.autocomplete
+            .add_tokens(autocomplete::UpdateRequest::Whole {
+                filepath: &self.filepath,
+                new_contents: &self.contents,
+            });
     }
 
     /// Updates highlighting. Performance cost varies. Call as infrequently as possible.
@@ -725,9 +733,15 @@ impl Buffer {
             linesprinted += 1;
         }
 
-        'count: for (ctr, line) in self.alert.contents.iter().enumerate() {
+        let mut ctr = 0;
+        'count: for line in self.alert.contents.iter() {
             if ctr > 16 {
                 break 'count;
+            }
+            if line.is_empty() {
+                continue;
+            } else {
+                ctr += 1;
             }
             tb_printed.push_str("\x1b[47m\x1b[30m");
             let mut wi = 0;

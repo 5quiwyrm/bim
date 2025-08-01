@@ -3,7 +3,7 @@
 //! allowing for autocomplete of `delta` to `δ` for instance.
 
 use crate::Buffer;
-use crate::autocomplete::AutoComplete;
+use crate::autocomplete::{AutoComplete, UpdateRequest};
 
 pub struct Markdown {}
 pub const MARKDOWN: Markdown = Markdown {};
@@ -83,7 +83,7 @@ impl AutoComplete for Markdown {
             query.chars().count(),
         )
     }
-    fn add_tokens(&mut self, _contents: &[String]) {}
+    fn add_tokens(&mut self, _request: UpdateRequest) {}
     fn is_kind(&self, path: &str) -> bool {
         path.ends_with(".md")
     }
